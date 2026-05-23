@@ -68,4 +68,4 @@ Your workflow triggers based on the environment state:
 > Trong lúc chờ, toàn bộ luật code và workflow đã được tập trung vào:
 > - `.agents/skills/unity-gameplay/SKILL.md` — Luật gameplay chính
 > - `.agents/rules/engineering-laws.md` — Luật kiến trúc
-> - `.agents/workflows/post-execution-sync.txt` — Quy trình sync sau khi code
+> - `.agents/workflows/post-execution-sync.md` — Tài liệu tham khảo sync (logic chính đã inline vào `universal-agent-rules.md` → mục "Do Work" Loop, step 7)

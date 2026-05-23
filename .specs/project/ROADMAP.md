@@ -1,6 +1,6 @@
 # ROADMAP: Cheezy Savoround
 
-**Last Updated:** 2026-05-23
+**Last Updated:** 2026-05-24
 
 > **AI CONTEXT:** This document outlines the project timeline and milestones. Use it to understand where the current task fits into the bigger picture.
 
@@ -10,7 +10,7 @@
 
 - [x] **Tuần 1: Thiết kế Luồng Vận Hành & Giải Thuật (18/05 - 24/05)**
   - _Mục tiêu:_ Setup dự án/Git, xây dựng Grid Logic, Raycast Drag & Drop, Snapping và Thuật toán quét 4 hướng.
-  - _Trạng thái:_ 🟡 Đang thực hiện (In Progress)
+  - _Trạng thái:_ 🟢 Hoàn thành (Completed)
 
 - [ ] **Tuần 2: Asset 3D, Tweening & Core Loop (25/05 - 31/05)**
   - _Mục tiêu:_ Import Mesh 3D, Tweening Bezier bay bánh, FSM Game States, Object Pooling và VFX/Audio.

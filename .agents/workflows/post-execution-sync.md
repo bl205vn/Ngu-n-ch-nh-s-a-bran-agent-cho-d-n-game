@@ -5,7 +5,7 @@ description: Post-execution context sync — reference guide for updating .specs
 # Post-Execution Sync (Reference)
 
 > **Vai trò:** File này là **tài liệu tham khảo chi tiết** cho bước Sync trong "Do Work" Loop.
-> Logic sync chính đã được inline vào `universal-agent-rules.md §5A.7`.
+> Logic sync chính đã được inline vào `universal-agent-rules.md` → mục "Do Work" Loop, step 7.
 > Chỉ cần đọc file này khi cần tra cứu chi tiết hơn.
 
 ---
