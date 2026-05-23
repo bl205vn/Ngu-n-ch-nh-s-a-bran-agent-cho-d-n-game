@@ -1,5 +1,5 @@
-# STACK: {{PROJECT_NAME}}
-**Last Updated:** YYYY-MM-DD
+# STACK: Cheezy Savoround
+**Last Updated:** 2026-05-23
 
 > **AI CONTEXT:** This document is the authoritative source of truth for the project's scope, tech stack, and goals. DO NOT guess or hallucinate these details. Always refer to this document.
 
@@ -8,58 +8,52 @@
 ## 1. Objective & Scope
 
 ### Mission
-[1-2 sentence description of what you're building]
+Phát triển một tựa game Casual (Puzzle/Sort) dựa trên lối chơi của Bloom Sort 3D, nhưng với chủ đề là các đĩa bánh Pizza. Người chơi kéo thả đĩa bánh vào lưới 3D để gộp (merge) và tạo combo nổ dây chuyền.
 
 ### Value Proposition
-- **For:** [Target users/personas]
-- **Problem:** [Core problem you're solving]
-- **Solution:** [How your product solves it]
+- **For:** Người chơi hệ Casual thích giải đố nhẹ nhàng.
+- **Problem:** Cần một trải nghiệm game kéo thả, có tính toán chiến thuật nhẹ nhưng thư giãn.
+- **Solution:** Lối chơi kéo thả mượt mà (snapping), hiệu ứng kích thích (combo nổ, rung lắc, âm thanh pitch shift) và đồ họa 3D bắt mắt.
 
 ### In Scope
 | Feature | Status | Description |
 |---------|--------|-------------|
-| [Feature] | 📋 TODO | [Brief description] |
+| Lưới Grid 3D | 📋 TODO | Sinh lưới động từ JSON (3x3, 4x4) |
+| Kéo thả & Snapping | 📋 TODO | Dùng Raycast để bắt điểm, hiển thị Ghost Mesh |
+| Merge & Cascade | 📋 TODO | Ghép 6 miếng bánh cùng loại để nổ, tạo combo |
+| Object Pooling | 📋 TODO | Tái sử dụng VFX, lát pizza, Floating Text |
+| Cửa hàng (Shop) | 📋 TODO | Mua skin đĩa bằng vàng (lưu JSON) |
+| FSM & Observer | 📋 TODO | Kiến trúc State Machine và Event-driven |
 
-### Out of Scope (Future Roadmap)
-- [Explicitly excluded feature 1]
-- [Explicitly excluded feature 2]
+### Out of Scope
+- Các tính năng Monetization (Quảng cáo, In-app purchase) đã bị lược bỏ trong dự án thực tập này.
 
 ---
 
 ## 2. Tech Stack
 
 ### Current Stack
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     FRONTEND                                │
-│  [Framework] + [Build Tool] + [Styling]                     │
-└───────────────────────────┬─────────────────────────────────┘
-                            │ [Protocol]
-┌───────────────────────────▼─────────────────────────────────┐
-│                     BACKEND                                 │
-│  [Runtime] + [Framework] + [ORM] + [Validation]             │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-        ┌───────────────────┼───────────────────┐
-        ▼                   ▼                   ▼
-┌───────────────┐   ┌───────────────┐   ┌───────────────┐
-│   Database    │   │   External    │   │     Auth      │
-│   [Type]      │   │   Services    │   │   [Provider]  │
-└───────────────┘   └───────────────┘   └───────────────┘
-```
+* **Engine:** Unity 3D (URP)
+* **Ngôn ngữ:** C#
+* **Kiến trúc:** Finite State Machine (FSM), Observer Pattern (Event System)
+* **Data-driven:** JSON và ScriptableObjects
+* **Version Control:** Git (Tối thiểu 3 commits/tuần)
 
 ### Key Technologies
 | Layer | Technology | Purpose |
 |-------|------------|---------|
-| Frontend | [Stack choice] | SPA / SSR |
-| Backend | [Stack choice] | API / Server |
-| Database | [Stack choice] | Data persistence |
+| Core Logic | C# & FSM | Xử lý luật chơi, trạng thái (Playing, GameOver) |
+| Rendering | GPU Instancing & Sprite Atlas | Tối ưu Batches (< 50 Batches) |
+| Data | C# JSON Utility | Lưu trữ Map, Vàng, Skin, Nhiệm vụ |
+| UI | Unity UI | Tách Canvas Tĩnh và Động riêng biệt |
 
 ---
 
 ## 3. Stakeholders & Constraints
-- Constraints: [timeline, tech, resources]
+- **Thời hạn:** 4 Tuần (18/05/2026 - 14/06/2026)
+- **Ràng buộc hiệu năng:** Zero GC Alloc trong hàm `Update()`. Cấm `GameObject.Find` hay `GetComponent` trong update loop. Cấm lạm dụng biến bool lồng nhau.
 
 ## 4. Success Metrics
-- [Target metrics]
+- Game chạy mượt, Batches < 50, GC Alloc tiệm cận 0.
+- Mã nguồn Clean Code, không có memory leak.
+- Đạt nghiệm thu từ Mentor của Taap Game.

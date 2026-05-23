@@ -1,46 +1,16 @@
-# STATE: {{PROJECT_NAME}}
-**Last Updated:** YYYY-MM-DD
+# STATE: Cheezy Savoround
+**Last Updated:** 2026-05-23
 
-> **AI CONTEXT:** Append-only log of decisions, blockers, risks, and lessons learned. Never overwrite past entries.
+> **AI CONTEXT:** This document tracks the current state, active decisions, and known issues. Update it when major architectural decisions are made.
 
 ---
 
-## Recent Decisions (ADR)
+## 1. Recent Decisions (ADR)
+- **Theme Change:** Chuyển đổi chủ đề game từ "Hoa" (Bloom Sort 3D) sang "Pizza" (Cheezy Savoround). Các thuật ngữ: Chậu -> Đĩa đựng pizza, Cánh hoa -> Miếng pizza.
+- **Workflow Architecture:** Sử dụng chuẩn Brain-agent B+ cho hệ thống quản lý AI. Gộp `spec.md` và `tasks.md` thành một file duy nhất `tasks.md` nằm trong `.specs/features/`.
 
-<!-- AD-001: [Decision Title]
-**Date:** YYYY-MM-DD
-**Status:** Accepted
-**Context:** [Why this decision was needed]
-**Decision:** [What was decided]
-**Consequences:** [Impact of this decision]
-**Alternatives:** [What else was considered]
--->
+## 2. Blockers
+- Đang bắt đầu Tuần 1. Chưa có blocker cụ thể.
 
-## Active Blockers
-
-<!-- B-001: [Blocker Title]
-**Discovered:** YYYY-MM-DD
-**Impact:** [What is blocked]
-**Workaround:** [Temporary solution, if any]
-**Resolution:** [Path to fixing]
--->
-
-## Active Risks
-
-<!-- R-001: [Risk Title]
-**Impact:** [High/Medium/Low]
-**Probability:** [High/Medium/Low]
-**Mitigation:** [How to reduce risk]
--->
-
-## Lessons Learned
-
-<!-- L-001: [Lesson Title]
-**Context:** [What happened]
-**Problem:** [What went wrong]
-**Solution:** [What fixed it]
--->
-
-## Deferred Ideas
-
-<!-- Ideas captured during work that belong in future features. -->
+## 3. Lessons Learned
+- [To be added after testing Core Gameplay]

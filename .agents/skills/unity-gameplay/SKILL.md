@@ -56,6 +56,6 @@ Khi triển khai một tính năng Gameplay mới:
 ### Thư mục quan trọng
 | Thư mục | Mục đích |
 |---------|---------|
-| `Assets/Scripts/Core/` | Chứa Game Manager, FSM, Event System cốt lõi. |
-| `Assets/Scripts/Data/` | Chứa các class định dạng dữ liệu, ScriptableObject. |
-| `Assets/Scripts/Gameplay/` | Logic điều khiển đĩa, bàn cờ, thao tác kéo thả. |
+| `Cheezy-Savoround-PH61823/Assets/Scripts/Core/` | Chứa Game Manager, FSM, Event System cốt lõi. |
+| `Cheezy-Savoround-PH61823/Assets/Scripts/Data/` | Chứa các class định dạng dữ liệu, ScriptableObject. |
+| `Cheezy-Savoround-PH61823/Assets/Scripts/Gameplay/` | Logic điều khiển đĩa, bàn cờ, thao tác kéo thả. |
