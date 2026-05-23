@@ -111,7 +111,13 @@ Platform:  Mobile/Casual
 4.  **Execute:** Write Code (Adhering to Skill + Universal Code Rules).
 5.  **Verify:** Run checks (Unity compile without errors).
 6.  **Document:** Update the corresponding tasks.md to `[DONE]`.
-7.  **Sync:** For COMPLEX/ORCHESTRATE tasks, run `/post-execution-sync` workflow to update .specs docs.
+7.  **Sync (COMPLEX/ORCHESTRATE only):** Trong **cùng response**, tự kiểm tra:
+    - File script/Prefab mới được tạo/xóa? → Cập nhật `@ARCHITECTURE`
+    - Tech stack thay đổi? → Cập nhật `@STACK`
+    - Quyết định kỹ thuật quan trọng? → Append vào `@STATE`
+    - Pattern mới cần ghi nhớ? → Append vào CONVENTIONS.md hoặc SKILL.md hiện có
+    - Kết thúc bằng dòng: `🔄 Sync: [files updated] ✅` hoặc `🔄 Sync: No spec updates needed.`
+    > ℹ️ Chi tiết đầy đủ hơn xem `.agents/workflows/post-execution-sync.md`
 
 ### B. The "Update Specs" Loop
 

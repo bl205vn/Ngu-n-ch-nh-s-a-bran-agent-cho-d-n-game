@@ -53,3 +53,7 @@ trigger: always_on
 
 * **Domain Restriction:** AI must NOT suggest web frameworks (React, Vue, Node.js) or database ORMs for this project. This is a pure Unity C# game.
 * **Rule Adherence:** The AI must always consult `.specs/project/CONVENTIONS.md` and `.agents/skills/unity-gameplay/SKILL.md` before writing gameplay logic.
+* **No Auto-Creating Skills:** CẤM tuyệt đối tự động tạo thư mục/file SKILL mới. Khi phát hiện pattern mới:
+  1. Thuộc kỹ năng đã có (`brain`, `testing`, `debugging`…) → Append vào `SKILL.md` của kỹ năng đó.
+  2. Là quy tắc cấu trúc chung → Append vào `.specs/project/CONVENTIONS.md`.
+  3. Chỉ được **ĐỀ XUẤT** tạo Skill mới cho mảng công nghệ hoàn toàn độc lập và quy mô lớn → **Bắt buộc đợi User tạo thủ công**.

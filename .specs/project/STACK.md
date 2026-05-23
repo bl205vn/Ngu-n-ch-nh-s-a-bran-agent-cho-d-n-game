@@ -51,7 +51,7 @@ Phát triển một tựa game Casual (Puzzle/Sort) dựa trên lối chơi củ
 
 ## 3. Stakeholders & Constraints
 - **Thời hạn:** 4 Tuần (18/05/2026 - 14/06/2026)
-- **Ràng buộc hiệu năng:** Zero GC Alloc trong hàm `Update()`. Cấm `GameObject.Find` hay `GetComponent` trong update loop. Cấm lạm dụng biến bool lồng nhau.
+- **Ràng buộc hiệu năng:** Steady 60 FPS trên mobile, GC Alloc tiệm cận 0 trong runtime loop. *(Chi tiết luật cụ thể → xem `CONVENTIONS.md §2`)*
 
 ## 4. Success Metrics
 - Game chạy mượt, Batches < 50, GC Alloc tiệm cận 0.
