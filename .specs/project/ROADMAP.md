@@ -1,6 +1,6 @@
 # ROADMAP: Cheezy Savoround
 
-**Last Updated:** 2026-05-24
+**Last Updated:** 2026-05-29
 
 > **AI CONTEXT:** This document outlines the project timeline and milestones. Use it to understand where the current task fits into the bigger picture.
 
@@ -14,7 +14,7 @@
 
 - [ ] **Tuần 2: Asset 3D, Tweening & Core Loop (25/05 - 31/05)**
   - _Mục tiêu:_ Import Mesh 3D, Tweening Bezier bay bánh, FSM Game States, Object Pooling và VFX/Audio.
-  - _Trạng thái:_ 📋 Chưa bắt đầu
+  - _Trạng thái:_ 🟡 Đang thực hiện (In Progress)
 
 - [ ] **Tuần 3: Meta Features & Save/Load (01/06 - 07/06)**
   - _Mục tiêu:_ Hệ thống Save/Load JSON, Shop UI đổi Mesh đĩa, Daily Reward UTC và Achievement.

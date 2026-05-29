@@ -1,6 +1,6 @@
 # ARCHITECTURE: Cheezy Savoround
 
-**Last Updated:** 2026-05-23
+**Last Updated:** 2026-05-29
 
 > **AI CONTEXT:** This document is the authoritative technical reference. Read this FIRST for any technical question. Do not guess architectural patterns — verify here.
 
@@ -151,14 +151,26 @@ flowchart TD
 
 ```
 Assets/
-├── Prefabs/        (Pizza, GridCells, VFX)
+├── Fonts/              (SUPER GIGGLE SDF - TextMesh Pro font)
+├── Materials/          (CubeTest, Den, Plate, TableZasiki_dif 1, lobby)
+├── Models/             (Floor_1, SinglePlate, DoublePlate, DoublePlate_1,
+│                        Pizza_1~6, Table, Tile, Lobby)
+├── Prefabs/            (Floor_1, PizzaPlate, Pizza_1, Plane)
+├── Resources/
+│   └── Levels/         (level_1.json ~ level_30.json)
+├── Scenes/             (Main, Gameplay)
 ├── Scripts/
-│   ├── Core/       (FSM, GridLogic)
-│   ├── UI/         (Menus, HUD, Shop)
-│   ├── Data/       (JSON parser, ScriptableObjects)
-│   └── Utils/      (ObjectPool, Extensions)
-├── Art/            (Models, Materials, Sprite Atlas)
-└── Scenes/         (Main, Gameplay)
+│   ├── Core/           (GridManager, InputManager, LevelManager, TrayManager)
+│   ├── Data/           (LevelData)
+│   ├── Editor/         (LevelGenerator)
+│   ├── Gameplay/       (GridCell, PizzaPlate)
+│   ├── UI/             ⚠️ TRỐNG - chưa có script
+│   └── Utils/          ⚠️ TRỐNG - chưa có script
+├── Settings/           (URP/Render Pipeline settings)
+├── Shader/             (Shader_Dia.shadergraph)
+├── TextMesh Pro/       (TMP default assets)
+└── Textures/           (plate01~06 + AO/Normal/Roughness maps,
+                         TableZasiki_dif, lobby, bg/, bt/, lg/, pu/)
 ```
 
 ## 6. Shared Utilities & Core APIs (Danh mục hàm cốt lõi đã xây dựng)
@@ -212,3 +224,21 @@ Dưới đây là các hàm quan trọng đã được viết trong quá trình 
   - Bắn 2 tia Raycast riêng biệt: một tia tìm Đĩa, một tia cắm xuống đất tìm Lưới.
   - **Cải tiến chống che khuất (Occlusion Fix):** Bắt buộc sử dụng `Physics.RaycastAll` thay vì `Raycast` thường trong lúc thả đĩa (Drop). Việc này giúp tia bắn xuyên qua các đĩa có sẵn ở ô lân cận (bị lẹm do góc chéo camera perspective), đảm bảo luôn snap trúng ô đất trống phía dưới.
   - Event `OnPlatePlaced(PizzaPlate, GridCell)`: Phát ra khi người chơi đặt đĩa thành công (dành cho hệ thống UI/Âm thanh hoặc bộ quét 4 hướng lắng nghe về sau).
+
+### 🚀 Cải tiến hiệu năng & Tối ưu hóa (Tuần 2 - Phase 0)
+
+Các kỹ thuật "Zero GC" và Clean Code dưới đây đã được chuẩn hóa để tái sử dụng trong suốt dự án:
+
+- **Zero GC Grid Scan:** Cache sẵn mảng `_directions` và danh sách đệm `_matchingCells` ở cấp độ class (`GridManager`). Không gọi `new List` hay `new Array` mỗi lần quét ô lân cận.
+- **Zero GC Component Access:** Khai báo Dictionary lưu trực tiếp tham chiếu component (`Dictionary<Vector2Int, GridCell>`) thay vì `GameObject` để loại bỏ `GetComponent<GridCell>()` lúc truy xuất.
+- **Zero GC Raycast (InputManager):**
+  - Thay thế `RaycastAll` bằng `Physics.RaycastNonAlloc` kết hợp mảng đệm tĩnh `_hitBuffer = new RaycastHit[10]`.
+  - Tự định nghĩa `HitDistanceComparer : IComparer<RaycastHit>` dạng `struct` để dùng trong `Array.Sort` nhằm loại bỏ hoàn toàn vùng nhớ rác do delegate ẩn (closure).
+- **Zero GC Material Manipulation:** Sử dụng `MaterialPropertyBlock` trong các hàm thay đổi màu sắc (như `ApplyCellColor` ở `GridManager`) thay vì đổi qua biến `.material` để tránh tình trạng Unity tự động sinh ra instance vật liệu mới gây tốn GC và phá vỡ GPU Instancing.
+- **Data Encapsulation:** Chuyển các thông số ngầm định (Magic Numbers) trong các scripts ra Inspector bằng `[SerializeField]` hoặc đưa vào hằng số `const`.
+- **Properties:** Đóng gói (encapsulate) field trạng thái nội bộ bằng private field kèm thuộc tính public chỉ có getter (vd: `public PizzaType Type => _type;`).
+
+### 🔧 Công cụ tiện ích (Tooling & Formatting)
+
+- **Tự động ép Scale (Auto-fit Scaling):** Hàm `FitPrefabToCell(GameObject)` (trong GridManager) tự động đọc `Renderer.bounds` của Prefab 3D bất kỳ để tính toán hệ số scale thu/phóng. Nhờ vậy mô hình sẽ tự động vừa vặn khít với `_cellSpacing` mà không cần rescale tay trước đó ở level model. _(Lưu ý: TrayManager hiện đã bỏ cell/đế đĩa giờ để thẳng xuống khay — cần bổ sung cho Prefab đĩa pizza tự thay đổi kích thước.)_
+- **Clean Editor (Debug Gizmos Toggle):** Các đoạn mã vẽ đường khung preview (OnDrawGizmos) được bọc bởi cờ bool (như `_showDebugGizmos` ở LevelManager) cho phép dev chủ động bật/tắt để giữ Scene view gọn gàng khi không cần thiết.
