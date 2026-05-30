@@ -163,7 +163,7 @@ Assets/
 │   ├── Core/           (GridManager, InputManager, LevelManager, TrayManager)
 │   ├── Data/           (LevelData)
 │   ├── Editor/         (LevelGenerator)
-│   ├── Gameplay/       (GridCell, PizzaPlate)
+│   ├── Gameplay/       (GridCell, PizzaPlate, PizzaSliceVisual)
 │   ├── UI/             ⚠️ TRỐNG - chưa có script
 │   └── Utils/          ⚠️ TRỐNG - chưa có script
 ├── Settings/           (URP/Render Pipeline settings)
@@ -189,11 +189,11 @@ Dưới đây là các hàm quan trọng đã được viết trong quá trình 
 - `ClearGrid()`: Dọn dẹp object lưới cũ trên scene.
 - `DrawGizmos(int width, int height)`: Vẽ khung preview cho Editor.
 - `GetCell(Vector2Int gridPos)`: Lấy nhanh tham chiếu `GridCell` dựa trên tọa độ mặt phẳng 2D. Rất hữu ích cho các thuật toán tìm đường hoặc lan truyền.
-- `CheckAdjacentCells(Vector2Int centerPos)`: Lõi thuật toán quét 4 hướng (Trên, Dưới, Trái, Phải). Hiện đang dùng để test in ra log, nhưng thiết kế sẵn sàng trả về `List<GridCell>` để phục vụ logic gộp bánh (Merge) cho Tuần 2.
+- `CheckAdjacentCells(Vector2Int centerPos)`: Lõi thuật toán quét 4 hướng (Trên, Dưới, Trái, Phải). Đã loại bỏ logic so sánh loại đĩa nguyên khối cũ, hiện đang duyệt mảng để check sự tương đồng `TypeIndex` giữa bất kỳ 2 miếng bánh nào trên 2 đĩa lân cận. Sẵn sàng trả về `List<GridCell>` để phục vụ logic gộp bánh (Merge) cho Tuần 2.
 
 ### TrayManager (`Scripts/Core/TrayManager.cs`)
 
-- `GenerateTray(int slotCount)`: Nhận thông số từ `LevelManager` để sinh khay chờ đĩa. Tự động tính khoảng cách và căn giữa theo trục X. Tích hợp thuật toán **Checkerboard** (chẵn/lẻ) giống GridManager.
+- `GenerateTray(int slotCount)`: Nhận thông số từ `LevelManager` để sinh khay chờ đĩa. Tự động tính khoảng cách và căn giữa theo trục X. Tự động gọi `FitPlateToSlot` để scale đĩa pizza vừa vặn với kích thước slot.
 - `ClearTray()`: Hủy toàn bộ Hold Slots hiện có.
 - `DrawGizmos(int slotCount)`: Vẽ khung preview cho Editor.
 
@@ -203,7 +203,11 @@ Dưới đây là các hàm quan trọng đã được viết trong quá trình 
 
 ### Cấu trúc Data (`Scripts/Data/LevelData.cs`)
 
-- `LevelData`: Class map dữ liệu `[Serializable]` chung cho mọi hệ thống (gồm `levelId`, `gridWidth`, `gridHeight`, `holdSlotCount`). Có thể mở rộng (thêm ma trận đĩa bánh) trong tương lai.
+- `LevelData`: Class map dữ liệu `[Serializable]` chung cho mọi hệ thống. Đã mở rộng tham số cấu hình bánh (`maxSlices`, `availablePizzaTypes`, `sliceCountProbabilities`) hỗ trợ cấu hình tỉ lệ phần trăm sinh bánh hoàn toàn Data-Driven.
+
+### Object Pooling (`Scripts/Utils/ObjectPoolManager.cs`)
+
+- Quản lý kho chứa các miếng bánh (`PizzaSliceVisual`) sinh sẵn từ Awake. Tuân thủ tuyệt đối Zero-GC: khi đĩa bánh đầy và phát nổ, các miếng bánh sẽ được trả về Pool (`ReturnPizzaSlice`) để ẩn đi tái sử dụng, chứ TUYỆT ĐỐI KHÔNG DÙNG lệnh `Destroy()`. Khi dọn đĩa, dùng hàm `ClearSlices()`. Việc gọi hàm này trong `OnDestroy` chỉ là chốt chặn phòng hờ (Safety Net) để tránh lủng Pool nếu đĩa bị Unity hủy đột ngột.
 
 ### Kéo Thả & Logic Lưới (Hệ thống Drag & Drop)
 
@@ -218,6 +222,10 @@ Dưới đây là các hàm quan trọng đã được viết trong quá trình 
   - Gắn kèm trên mỗi ô `_cellPrefab`.
   - `Initialize(Vector2Int gridPos)`: Gán toạ độ 2D cho ô lưới.
   - `PlacePlate(PizzaPlate plate)`: Thực hiện **Snapping** - ép toạ độ đĩa vào đúng tâm của ô cờ caro. Đánh dấu ô đã có đĩa (`IsOccupied = true`).
+
+- **PizzaSliceVisual (`Scripts/Gameplay/PizzaSliceVisual.cs`)**
+  - Script điều khiển hiển thị (Visual) gắn trên Prefab miếng bánh.
+  - `SetVisual(int pizzaTypeIndex)`: Tuân thủ luật Zero GC (không dùng GetChild/GetComponent runtime), bật/tắt (Toggle) chính xác model con dựa trên mảng GameObject cấu hình sẵn ở Inspector. Thân thiện với Object Pooling.
 
 - **InputManager (`Scripts/Core/InputManager.cs`)**
   - Controller chính xử lý vòng lặp kéo thả `Mouse Down -> Mouse Drag -> Mouse Up`.
@@ -240,5 +248,5 @@ Các kỹ thuật "Zero GC" và Clean Code dưới đây đã được chuẩn h
 
 ### 🔧 Công cụ tiện ích (Tooling & Formatting)
 
-- **Tự động ép Scale (Auto-fit Scaling):** Hàm `FitPrefabToCell(GameObject)` (trong GridManager) tự động đọc `Renderer.bounds` của Prefab 3D bất kỳ để tính toán hệ số scale thu/phóng. Nhờ vậy mô hình sẽ tự động vừa vặn khít với `_cellSpacing` mà không cần rescale tay trước đó ở level model. _(Lưu ý: TrayManager hiện đã bỏ cell/đế đĩa giờ để thẳng xuống khay — cần bổ sung cho Prefab đĩa pizza tự thay đổi kích thước.)_
+- **Tự động ép Scale (Auto-fit Scaling):** Hàm `FitPrefabToCell(GameObject)` (trong GridManager) và `FitPlateToSlot(GameObject)` (trong TrayManager) tự động đọc `Renderer.bounds` của Prefab 3D bất kỳ để tính toán hệ số scale thu/phóng. Nhờ vậy mô hình (lưới hoặc đĩa pizza) sẽ tự động vừa vặn khít với `_cellSpacing` hoặc `_slotSpacing` mà không cần rescale bằng tay trên asset gốc. Pattern này rất hữu ích khi thay thế các Model 3D khác nhau.
 - **Clean Editor (Debug Gizmos Toggle):** Các đoạn mã vẽ đường khung preview (OnDrawGizmos) được bọc bởi cờ bool (như `_showDebugGizmos` ở LevelManager) cho phép dev chủ động bật/tắt để giữ Scene view gọn gàng khi không cần thiết.
