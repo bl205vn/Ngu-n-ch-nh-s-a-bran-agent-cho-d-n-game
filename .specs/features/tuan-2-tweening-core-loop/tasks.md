@@ -77,13 +77,13 @@ Tuần 2 tập trung vào hai mảng song song:
   - **Verification:** Tất cả model nằm trong `Assets/Models/`, material trong `Assets/Materials/`.
   -
 
-- [ ] **Task 1.2: Tạo Prefab hệ thống đĩa pizza thực tế**
+- [x] **Task 1.2: Tạo Prefab hệ thống đĩa pizza thực tế**
   - Tạo Prefab `PizzaPlate` mới với Mesh 3D thực tế thay thế Cube thô.
   - Tích hợp các slot cho miếng pizza (6 vị trí) trên đĩa (có thể dùng empty Transform children).
   - Gắn script `PizzaPlate.cs` đã có, đảm bảo logic cũ vẫn hoạt động sau khi đổi Mesh.
   - **Verification:** Kéo thả đĩa pizza mới vẫn Snap đúng vào lưới. Visual không còn Cube.
 
-- [ ] **Task 1.3: Lập trình Bezier Tweening cho miếng pizza**
+- [x] **Task 1.3: Lập trình Bezier Tweening cho miếng pizza**
   - Viết class `BezierTween` trong `Scripts/Utils/` để tính đường cong Bezier 3D (Quadratic hoặc Cubic).
   - Triển khai logic: Khi quét 4 hướng phát hiện miếng pizza cùng loại → miếng pizza bay từ đĩa A sang đĩa B theo đường cong Bezier.
   - Sử dụng Coroutine hoặc Update-based interpolation (tránh GC).
@@ -94,7 +94,7 @@ Tuần 2 tập trung vào hai mảng song song:
 
 ### PHASE 2: FSM Game States (Ngày 3)
 
-- [ ] **Task 2.1: Thiết kế và triển khai FSM**
+- [x] **Task 2.1: Thiết kế và triển khai FSM**
   - Tạo interface `IGameState` với các method: `Enter()`, `Execute()`, `Exit()`.
   - Tạo `GameStateManager` (hoặc tích hợp vào `GameManager`) quản lý FSM.
   - Triển khai các State class riêng biệt:
@@ -107,13 +107,13 @@ Tuần 2 tập trung vào hai mảng song song:
 
 ---
 
-### PHASE 3: Merge Logic & Game Over (Ngày 4-5)
+### PHASE 3: Logic Gameplay Cốt Lõi (Ngày 4)
 
-- [ ] **Task 3.1: Nâng cấp thuật toán quét → BFS/Flood Fill + Merge**
-  - Mở rộng `CheckAdjacentCells` thành **BFS** (Breadth-First Search) để tìm toàn bộ cluster đĩa cùng loại (depth > 1, hỗ trợ combo chain A→B→C).
+- [x] **Task 3.1: Nâng cấp thuật toán quét → BFS/Flood Fill + Merge**
+  - Mở rộng `CheckAdjacentCells` để hỗ trợ combo chain (đĩa đặt xuống hút các miếng bánh cùng loại từ các đĩa lân cận).
   - Triển khai logic merge: Chuyển miếng pizza từ các đĩa lân cận sang đĩa trung tâm cho đến khi đủ 6 miếng → nổ đĩa → giải phóng ô.
   - Khi đĩa nổ → kích hoạt re-check lân cận (Combo Cascade).
-  - **Verification:** Đặt đĩa cạnh 2+ đĩa cùng loại → miếng pizza gộp về, đĩa đủ 6 → biến mất → kích hoạt chain check. Console log xác nhận combo count.
+  - **Verification:** Đảm bảo khi hút bánh, số lượng và type được chuyển đúng, và gọi `BezierTween` mượt mà, sau đó FSM chuyển đúng trạng thái. Đĩa nổ khi đủ 6 miếng cùng loại, và kích hoạt hút tiếp ở các đĩa xung quanh.
   - **File:** `Scripts/Core/GridManager.cs` (nâng cấp)
 
 - [ ] **Task 3.2: Triển khai Game Over Detection**

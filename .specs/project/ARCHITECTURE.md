@@ -1,6 +1,6 @@
 # ARCHITECTURE: Cheezy Savoround
 
-**Last Updated:** 2026-05-29
+**Last Updated:** 2026-05-31
 
 > **AI CONTEXT:** This document is the authoritative technical reference. Read this FIRST for any technical question. Do not guess architectural patterns — verify here.
 
@@ -12,104 +12,204 @@ Trò chơi sử dụng cấu trúc Component-based kết hợp kiến trúc Mana
 
 ### Sơ đồ luồng (Game Flow Diagram)
 
+> **Nguồn:** `docs/Ve_so_do_game_banh_pizza.png` — Vẽ lại ngày 2026-05-31
+
 ```mermaid
 flowchart TD
-    %% =====================
-    %% KHỐI ĐẦU VÀO
-    %% =====================
-    subgraph INPUT["📥 Khối Đầu Vào"]
-        A[Vị trí đĩa ban đầu]
-        B[Chạm]
-        C[Kéo]
-        D[Thả]
-    end
 
-    %% =====================
-    %% KHỐI XỬ LÝ LOGIC
-    %% =====================
-    subgraph LOGIC["⚙️ Khối Xử Lý Logic"]
-        E{Vị trí thả}
-        F[Cập nhật lưới Grid]
-        G[Quét 4 ô lân cận]
-        H{Có cùng loại bánh?}
-        I[Tính toán di chuyển miếng bánh nhập/trừ]
-        J[Đĩa đủ 6 miếng]
-        K{Số đĩa nổ trong lượt > 1?}
-        L{Lưới đầy & Hết nước đi?}
-    end
+%% =====================
+%% KHỐI ĐẦU VÀO
+%% =====================
+subgraph INPUT["📥 Khối đầu vào"]
+    A["Vị trí của đĩa ban đầu"]
+    B["Chạm"]
+    C["Kéo"]
+    D["Thả"]
+end
 
-    %% =====================
-    %% KHỐI TRUYỀN TIN
-    %% =====================
-    subgraph EVENT["📡 Khối Truyền Tin"]
-        M[Đặt đĩa thành công]
-        N[Đĩa bánh nổ]
-        O[Đạt combo]
-        P[Thua cuộc]
-    end
+%% =====================
+%% KHỐI XỬ LÝ LOGIC
+%% =====================
+subgraph LOGIC["⚙️ Khối xử lý logic"]
+    E{"Vị trí thả Snap"}
+    F["Cập nhật lưới Grid"]
+    G["Quét 4 ô lân cận"]
+    H{"Có cùng loại bánh?"}
+    I["Tính toán di chuyển\nmiếng bánh nhập/trừ"]
+    J{"Đĩa đủ 6 miếng\ncùng loại?"}
+    K{"Số đĩa nổ\ntrong lượt > 1?"}
+    L{"Lưới & khay chứa đầy\n& hết nước đi?"}
+end
 
-    %% =====================
-    %% KHỐI ĐẦU RA HIỂN THỊ
-    %% =====================
-    subgraph OUTPUT["🖥️ Khối Đầu Ra Hiển Thị"]
-        Q[Hệ thống UI]
-        R[Hệ thống âm thanh]
-        S[Hệ thống hiệu ứng]
-        T[Hiệu ứng động]
-    end
+%% =====================
+%% KHỐI TRUYỀN TIN
+%% =====================
+subgraph EVENT["📡 Khối truyền tin"]
+    M["Đặt đĩa thất bại"]
+    N["Đặt đĩa thành công"]
+    O["Đĩa bánh nổ"]
+    P["Đạt combo"]
+    Q["Thua cuộc"]
+end
 
-    %% =====================
-    %% ĐƯỜNG NỐI
-    %% =====================
+%% =====================
+%% KHỐI ĐẦU RA HIỂN THỊ
+%% =====================
+subgraph OUTPUT["🖥️ Khối đầu ra hiển thị"]
+    R["Hệ thống UI"]
+    S["Hệ thống âm thanh"]
+    T["Hoạt ảnh"]
+    U["VFX"]
+end
 
-    %% Luồng đầu vào
-    A --> B --> C --> D
+%% =====================
+%% LUỒNG KHỐI ĐẦU VÀO
+%% =====================
+A -->|"✅ Đúng"| B
+B -->|"✅ Đúng"| C
+C -->|"✅ Đúng"| D
 
-    %% Luồng chính
-    D --> E
-    E --> F
-    F --> G
-    G --> H
-    H -->|Đúng| I
-    I --> J
-    J -->|Lặp| F
-    J --> K
-    K -->|Đúng| O
-    K -->|Sai| L
+%% =====================
+%% LUỒNG TỪ THẢ → LOGIC
+%% =====================
+D -->|"✅ Đúng"| E
 
-    %% Nhánh sai
-    E -->|Sai| A
-    H -->|Sai| L
-    L -->|Đúng| P
-    L -->|Sai| INPUT
+%% Nhánh SAI từ Snap → quay về Vị trí ban đầu
+E -->|"❌ Sai"| A
 
-    %% Kết nối đĩa nổ
-    J --> N
+%% Truyền tin lỗi từ Snap → Đặt đĩa thất bại
+E -. "🔴 Truyền tin lỗi" .-> M
 
-    %% Truyền tin → Đặt đĩa thành công
-    F --> M
-    M --> R
-    M --> S
-    M --> T
+%% Nhánh ĐÚNG từ Snap → Cập nhật Grid
+E -->|"✅ Đúng"| F
 
-    %% Truyền tin → Đĩa bánh nổ
-    N --> R
-    N --> S
-    N --> T
+%% Truyền tin đúng từ Grid → Đặt đĩa thành công
+F -. "🟢 Truyền tin" .-> N
 
-    %% Truyền tin → Đạt combo
-    O --> Q
-    O --> R
+%% Luồng đúng tiếp tục
+F -->|"✅ Đúng"| G
+G -->|"✅ Đúng"| H
 
-    %% Truyền tin → Thua cuộc
-    P --> Q
-    P --> R
+%% Nhánh SAI: không cùng loại bánh → kiểm tra thua
+H -->|"❌ Sai"| L
+
+%% Nhánh ĐÚNG: có cùng loại → tính toán
+H -->|"✅ Đúng"| I
+I -->|"✅ Đúng"| J
+
+%% Nhánh SAI: chưa đủ 6 miếng → lặp lại Quét ô lân cận
+J -->|"🟡 Sai / Lặp"| G
+
+%% Nhánh ĐÚNG: Đủ 6 miếng → Đĩa nổ
+J -->|"✅ Đúng"| O
+
+%% Nhánh LẶP: Đĩa nổ → reset lại Grid (chain combo)
+O -->|"🟡 Lặp"| F
+
+%% Luồng kiểm tra combo sau khi nổ
+O -->|"✅ Đúng"| K
+
+%% Nhánh ĐÚNG combo → Đạt combo
+K -->|"✅ Đúng"| P
+
+%% Nhánh SAI combo → kiểm tra thua
+K -->|"❌ Sai"| L
+
+%% Nhánh ĐÚNG thua → Thua cuộc
+L -->|"✅ Đúng"| Q
+
+%% Nhánh SAI thua → lặp lại từ Chạm
+L -->|"❌ Sai / Lặp"| B
+
+%% =====================
+%% LUỒNG TRUYỀN TIN → ĐẦU RA
+%% =====================
+
+%% Đặt đĩa thất bại → Hoạt ảnh (chỉ báo lỗi đặt)
+M -. "🟢" .-> T
+
+%% Đặt đĩa thành công → UI (sinh đĩa mới), Âm thanh, Hoạt ảnh
+N -. "🟢" .-> R
+N -. "🟢" .-> S
+N -. "🟢" .-> T
+
+%% Đĩa bánh nổ → UI, Âm thanh, Hoạt ảnh, VFX
+O -. "🟢" .-> R
+O -. "🟢" .-> S
+O -. "🟢" .-> T
+O -. "🟢" .-> U
+
+%% Đạt combo → UI, Âm thanh, VFX
+P -. "🟢" .-> R
+P -. "🟢" .-> S
+P -. "🟢" .-> U
+
+%% Thua cuộc → UI, Âm thanh, Hoạt ảnh
+Q -. "🟢" .-> R
+Q -. "🟢" .-> S
+Q -. "🟢" .-> T
 ```
 
-- **Khối Đầu Vào:** Nhận thao tác Drag & Drop qua `Raycast`.
-- **Khối Logic:** Cập nhật lưới Grid 3D, thuật toán quét 4 hướng (trên, dưới, trái, phải), tính toán luân chuyển miếng bánh và kiểm tra điều kiện (Nổ đĩa, Game Over).
-- **Khối Truyền Tin:** Gửi sự kiện bằng Observer Pattern (Event System).
-- **Khối Đầu Ra:** Hệ thống UI, Sound, VFX Particle, và Animation (Tweening, Slerp) phản hồi tương tác.
+**Chú thích màu sắc:**
+- ✅ Mũi tên xanh lá (liền): Nhánh ĐÚNG — luồng logic chính
+- ❌ Mũi tên đỏ (liền): Nhánh SAI — rollback hoặc điều kiện thất bại
+- 🟡 Mũi tên vàng (liền): SAI / LẶP — tạo vòng lặp combo chain
+- 🟢 Mũi tên nét đứt: Truyền tin sự kiện (Observer Event) — kích hoạt hệ thống độc lập (UI/Sound/VFX/Animation)
+- 🔴 Mũi tên đỏ nét đứt: Truyền tin lỗi — chỉ phát event báo cho người chơi biết đặt sai
+
+**Mô tả từng khối:**
+
+- **Khối Đầu Vào:** Nhận thao tác Drag & Drop qua `Raycast` (Touch → Kéo → Thả).
+- **Khối Logic:** Snap đĩa vào lưới, cập nhật Grid 3D, quét 4 hướng, tính toán luân chuyển miếng bánh, kiểm tra điều kiện Nổ (6 miếng cùng loại), kiểm tra Combo, và Game Over.
+- **Khối Truyền Tin:** Gửi sự kiện bằng Observer Pattern. Bao gồm cả event thất bại (Snap sai) để kích hoạt hoạt ảnh phản hồi lỗi.
+- **Khối Đầu Ra:** Hệ thống UI (sinh đĩa mới, cập nhật điểm), Sound, VFX Particle, và Hoạt ảnh (Tweening/Bezier) phản hồi độc lập với logic.
+
+---
+
+### Mô tả chi tiết sơ đồ (Nguồn gốc từ cty)
+
+#### Các khối
+
+**Khối đầu vào:** Vị trí của đĩa ban đầu → Chạm → Kéo → Thả
+
+**Khối xử lý logic:** Vị trí thả Snap, Cập nhật lưới Grid, Quét 4 ô lân cận, Có cùng loại bánh?, Tính toán di chuyển miếng bánh nhập/trừ, Đĩa đủ 6 miếng cùng loại?, Số đĩa nổ trong lượt > 1?, Lưới & khay chứa đầy & hết nước đi?
+
+**Khối truyền tin:** Đặt đĩa thất bại, Đặt đĩa thành công, Đĩa bánh nổ, Đạt combo, Thua cuộc
+
+**Khối đầu ra hiển thị:** Hệ thống UI, Hệ thống âm thanh, Hoạt ảnh, VFX
+
+#### Luồng nối chi tiết
+
+1. "Vị trí của đĩa ban đầu" nối đúng đến "Chạm" → nối đúng đến "Kéo" → nối đúng đến "Thả"
+2. Từ "Thả" nối đúng đến "Vị trí thả Snap":
+   - Nhánh **sai** → về "Vị trí của đĩa ban đầu", đồng thời truyền tin sự kiện đến "Đặt đĩa thất bại"
+   - Nhánh **đúng** → "Cập nhật lưới Grid" → truyền tin sự kiện đến "Đặt đĩa thành công" → tiếp tục đến "Quét 4 ô lân cận" → "Có cùng loại bánh?"
+     - Nhánh **sai** → "Lưới & khay chứa đầy & hết nước đi?"
+     - Nhánh **đúng** → "Tính toán di chuyển miếng bánh nhập/trừ" → "Đĩa đủ 6 miếng cùng loại?"
+       - Nhánh **sai** → quay về "Quét 4 ô lân cận" (vòng lặp)
+       - Nhánh **đúng** → "Đĩa bánh nổ" → truyền tin sự kiện về "Cập nhật lưới Grid" để reset ô (chain combo)
+3. Từ "Đĩa bánh nổ" → "Số đĩa nổ trong lượt > 1?":
+   - Nhánh **đúng** → "Đạt combo"
+   - Nhánh **sai** → "Lưới & khay chứa đầy & hết nước đi?"
+4. Từ "Lưới & khay chứa đầy & hết nước đi?":
+   - Nhánh **đúng** → "Thua cuộc"
+   - Nhánh **sai** → quay lại "Chạm" (vòng lặp)
+5. "Đặt đĩa thất bại" → truyền tin sự kiện đến "Hoạt ảnh" (báo người chơi đặt sai)
+6. "Đặt đĩa thành công" → truyền tin sự kiện đến "Hệ thống UI" (để sinh đĩa có ngẫu nhiên các miếng pizza), "Hệ thống âm thanh", "Hoạt ảnh"
+7. "Đĩa bánh nổ" → truyền tin sự kiện đến "Hệ thống UI", "Hệ thống âm thanh", "Hoạt ảnh", "VFX"
+8. "Đạt combo" → truyền tin sự kiện đến "Hệ thống UI", "Hệ thống âm thanh", "VFX"
+9. "Thua cuộc" → truyền tin sự kiện đến "Hệ thống UI", "Hệ thống âm thanh", "Hoạt ảnh"
+
+#### Chú thích màu sắc (theo sơ đồ gốc)
+
+1. Màu **xanh lá** (liền): Đúng
+2. Màu **đỏ** (liền): Sai
+3. Màu **vàng** (liền): Sai / Lặp
+4. Màu **xanh lá nét đứt**: Truyền tin sự kiện đúng
+5. Màu **vàng nét đứt**: Truyền tin để lặp (chain combo)
+6. Màu **đỏ nét đứt**: Truyền tin lỗi từ "Vị trí thả Snap" → "Đặt đĩa thất bại" — chỉ để chạy hoạt ảnh báo người chơi đặt sai
+
+---
 
 ## 2. Identified Patterns
 
@@ -160,12 +260,13 @@ Assets/
 │   └── Levels/         (level_1.json ~ level_30.json)
 ├── Scenes/             (Main, Gameplay)
 ├── Scripts/
-│   ├── Core/           (GridManager, InputManager, LevelManager, TrayManager)
+│   ├── Core/           (GridManager, InputManager, LevelManager, TrayManager, GameStateManager, IGameState)
+│   │   └── States/     (PlayingState, AnimatingState, CheckingComboState, GameOverState)
 │   ├── Data/           (LevelData)
 │   ├── Editor/         (LevelGenerator)
 │   ├── Gameplay/       (GridCell, PizzaPlate, PizzaSliceVisual)
 │   ├── UI/             ⚠️ TRỐNG - chưa có script
-│   └── Utils/          ⚠️ TRỐNG - chưa có script
+│   └── Utils/          (ObjectPoolManager, BezierTween)
 ├── Settings/           (URP/Render Pipeline settings)
 ├── Shader/             (Shader_Dia.shadergraph)
 ├── TextMesh Pro/       (TMP default assets)
@@ -193,8 +294,11 @@ Dưới đây là các hàm quan trọng đã được viết trong quá trình 
 
 ### TrayManager (`Scripts/Core/TrayManager.cs`)
 
-- `GenerateTray(int slotCount)`: Nhận thông số từ `LevelManager` để sinh khay chờ đĩa. Tự động tính khoảng cách và căn giữa theo trục X. Tự động gọi `FitPlateToSlot` để scale đĩa pizza vừa vặn với kích thước slot.
-- `ClearTray()`: Hủy toàn bộ Hold Slots hiện có.
+- **Singleton:** `TrayManager.Instance` — quản lý khay chứa đĩa pizza toàn cục.
+- `GenerateTray(int slotCount)`: Nhận thông số từ `LevelManager` để tạo anchor slot (empty GO) + sinh batch đĩa đầu tiên. Tự động gọi `FitPlateToSlot` để scale đĩa vừa vặn với slot.
+- **Batch Refill Flow:** Lắng nghe `InputManager.OnPlatePlaced` (Observer) để theo dõi đĩa rời khay. Khi **cả 3 slot đều trống** → bật cờ `_pendingRefill`. Lắng nghe `GameStateManager.OnStateChanged` (Observer) → khi FSM chuyển về `PlayingState` + cờ refill = true → `RefillTray()` sinh 3 đĩa mới cùng lúc với miếng pizza ngẫu nhiên từ JSON config. Thiết kế đảm bảo đĩa mới chỉ xuất hiện SAU KHI merge/bloom animation kết thúc hoàn toàn.
+- `IsAllSlotsEmpty()`: Kiểm tra tất cả slot đã trống chưa.
+- `ClearTray()`: Hủy toàn bộ anchor + xóa tham chiếu đĩa.
 - `DrawGizmos(int slotCount)`: Vẽ khung preview cho Editor.
 
 ### LevelGenerator (`Scripts/Editor/LevelGenerator.cs`)
@@ -208,6 +312,17 @@ Dưới đây là các hàm quan trọng đã được viết trong quá trình 
 ### Object Pooling (`Scripts/Utils/ObjectPoolManager.cs`)
 
 - Quản lý kho chứa các miếng bánh (`PizzaSliceVisual`) sinh sẵn từ Awake. Tuân thủ tuyệt đối Zero-GC: khi đĩa bánh đầy và phát nổ, các miếng bánh sẽ được trả về Pool (`ReturnPizzaSlice`) để ẩn đi tái sử dụng, chứ TUYỆT ĐỐI KHÔNG DÙNG lệnh `Destroy()`. Khi dọn đĩa, dùng hàm `ClearSlices()`. Việc gọi hàm này trong `OnDestroy` chỉ là chốt chặn phòng hờ (Safety Net) để tránh lủng Pool nếu đĩa bị Unity hủy đột ngột.
+
+### BezierTween (`Scripts/Utils/BezierTween.cs`)
+
+- **Singleton** quản lý hiệu ứng bay đường cong Bezier cho miếng pizza. Dùng mảng struct cố định `TweenData[]` cấp phát 1 lần duy nhất trong `Awake()` — **Zero GC** trong toàn bộ vòng lặp `Update()`.
+- `QuadraticBezier(p0, p1, p2, t)`: Hàm static thuần túy tính điểm trên đường cong Bezier bậc 2. Dùng cho hiệu ứng bay cung (arc).
+- `CubicBezier(p0, p1, p2, p3, t)`: Dự phòng Bezier bậc 3 cho hiệu ứng phức tạp hơn.
+- `EaseInOutQuad(t)`: Hàm easing tăng tốc/giảm tốc mượt mà — miếng bánh bay chậm lúc đầu, nhanh ở giữa, chậm lại khi hạ cánh.
+- `StartTween(target, endPos, arcHeight, duration, onComplete)`: API chính — bắt đầu bay 1 miếng pizza. Tự tính điểm điều khiển (midpoint nâng lên). Trả về `true/false`.
+- `HasActiveTweens`: Property cho FSM biết còn tween nào đang chạy.
+- `CancelAllTweens()`: Hủy toàn bộ tween (dùng khi reset màn hoặc Game Over), snap mọi target về đích ngay.
+- **Event** `OnAllTweensCompleted`: Phát khi tất cả tween hoàn thành — `AnimatingState` lắng nghe để chuyển state.
 
 ### Kéo Thả & Logic Lưới (Hệ thống Drag & Drop)
 

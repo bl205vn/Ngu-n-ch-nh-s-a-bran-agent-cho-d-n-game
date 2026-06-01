@@ -8,11 +8,10 @@
 
 ## 1. Recent Decisions (ADR)
 
-- **Theme Change:** Chuyển đổi chủ đề game từ "Hoa" (Bloom Sort 3D) sang "Pizza" (Cheezy Savoround). Các thuật ngữ: Chậu -> Đĩa đựng pizza, Cánh hoa -> Miếng pizza.
-- **Workflow Architecture:** Sử dụng chuẩn Brain-agent B+ cho hệ thống quản lý AI. Gộp `spec.md` và `tasks.md` thành một file duy nhất `tasks.md` nằm trong `.specs/features/`.
-- **Phase 1 - Import 3D Assets (2026-05-29):** Đã import thành công bộ asset 3D vào `Assets/Models/` gồm: Floor_1, SinglePlate, DoublePlate (x2), Pizza_1~6, Table, Tile, Lobby. Kèm theo Materials (5 file), Textures (plate01~06 + AO/Normal/Roughness maps), Shader (Shader_Dia.shadergraph), và Font (SUPER GIGGLE SDF). Prefabs đã tạo: Floor_1, PizzaPlate, Pizza_1, Plane.
-- **Unified Cell Prefab (2026-05-29):** GridManager chỉ dùng 1 `_cellPrefab` duy nhất (Floor_1), áp dụng Checkerboard bằng `MaterialPropertyBlock` thay vì 2 prefab riêng. Giúp giảm quản lý asset và giữ GPU Instancing hoạt động tốt.
-- **Phase 1 - Slices & Object Pooling (2026-05-30):** Tích hợp `ObjectPoolManager`. Xóa bỏ enum `PizzaType` cũ gán cứng trên đĩa, thay bằng `int TypeIndex` gán trên từng miếng bánh. Áp dụng chuẩn Data-Driven bằng thuật toán Roulette Wheel Selection để config tỉ lệ xuất hiện của miếng bánh qua JSON.
+- **[2026-06-01] Batch Refill — Sinh đĩa theo batch (3 đĩa/lượt):** Thay đổi flow sinh đĩa pizza từ "sinh từng cái" sang "sinh cả batch khi khay trống hết" (giống Candy Crush / Triple Tile). TrayManager theo dõi `_slotPlates[]`, lắng nghe `InputManager.OnPlatePlaced` để đánh dấu slot trống. Khi cả 3 slot trống + FSM về `PlayingState` (merge/bloom xong hẳn) → `RefillTray()` sinh 3 đĩa mới cùng lúc. GameStateManager bổ sung `OnStateChanged` event (Observer Pattern) để TrayManager lắng nghe.
+- **[2026-05-31] Vẽ lại Sơ đồ Logic Game (Game Flow Diagram):** Cập nhật `ARCHITECTURE.md` với sơ đồ mới từ `docs/Ve_so_do_game_banh_pizza.png`. Thay đổi so với phiên bản cũ: (1) Bổ sung event **"Đặt đĩa thất bại"** — Snap sai cũng phát event để chạy hoạt ảnh phản hồi lỗi; (2) Đổi tên node "Vị trí thả" → **"Vị trí thả Snap"** chính xác hơn; (3) Node J từ hình chữ nhật thành **diamond** (điều kiện rõ ràng); (4) Bổ sung loop **O → F** (đĩa nổ → reset Grid) cho chain combo; (5) Tách **"Hoạt ảnh"** và **"VFX"** thành 2 output độc lập; (6) Mapping event → output được làm rõ chính xác per-event (Đặt đĩa thành công → UI sinh đĩa mới).
+- **Phase 3 - Parallel Pull & Drop Animation (2026-05-31):** Nâng cấp thuật toán Merge để kéo bánh đồng thời từ 4 hướng (1 miếng/hướng/lượt) giống cơ chế Bloom Sort. Sửa lỗi teleport bằng cách gọi `SetParent(transform, true)` để giữ nguyên World Position trước khi bay Bezier. Thêm Coroutine `AnimateToCell` (Quadratic Bezier 3D) vào `PizzaPlate.cs` để tạo hiệu ứng vòng cung nhô cao 0.8 unit khi snap đĩa vào ô lưới. Mọi thứ vận hành mượt mà với FSM `CheckingComboState` và `AnimatingState`.
+
 
 ## 2. Blockers
 
