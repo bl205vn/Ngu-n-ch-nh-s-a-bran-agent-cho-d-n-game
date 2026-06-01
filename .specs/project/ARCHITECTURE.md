@@ -291,6 +291,13 @@ Dưới đây là các hàm quan trọng đã được viết trong quá trình 
 - `DrawGizmos(int width, int height)`: Vẽ khung preview cho Editor.
 - `GetCell(Vector2Int gridPos)`: Lấy nhanh tham chiếu `GridCell` dựa trên tọa độ mặt phẳng 2D. Rất hữu ích cho các thuật toán tìm đường hoặc lan truyền.
 - `CheckAdjacentCells(Vector2Int centerPos)`: Lõi thuật toán quét 4 hướng (Trên, Dưới, Trái, Phải). Đã loại bỏ logic so sánh loại đĩa nguyên khối cũ, hiện đang duyệt mảng để check sự tương đồng `TypeIndex` giữa bất kỳ 2 miếng bánh nào trên 2 đĩa lân cận. Sẵn sàng trả về `List<GridCell>` để phục vụ logic gộp bánh (Merge) cho Tuần 2.
+- `TrySwapMinoritySlice()`: Cơ chế **Tráo đổi chống kẹt**. Khi đĩa giữa đầy nhưng bị lẫn loại bánh (`!IsFullAndPure()`), hàm sẽ tìm miếng bánh thiểu số trong đĩa để ném sang đĩa lân cận, và hút về miếng bánh đa số từ lân cận đó. Quá trình trao đổi 1-1 thông qua `BezierTween` đảm bảo lưới không bao giờ bị Deadlock.
+
+### PizzaPlate (`Scripts/Gameplay/PizzaPlate.cs`)
+
+- Quản lý trạng thái và danh sách miếng pizza (`_slices[]`).
+- `TryAddSlice()` / `RemoveSliceOfType()`: Hỗ trợ thêm/bớt bánh an toàn với cơ chế SetParent giữ World Position (chống lỗi teleport).
+- `GetMajorityType()` / `GetMinorityType()`: Thuật toán tìm kiếm miếng bánh chiếm số lượng nhiều nhất (để hút thêm) và ít nhất (để đẩy đi khi kẹt đĩa).
 
 ### TrayManager (`Scripts/Core/TrayManager.cs`)
 
