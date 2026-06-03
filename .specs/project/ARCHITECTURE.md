@@ -1,7 +1,6 @@
 # ARCHITECTURE: Cheezy Savoround
 
-**Last Updated:** 2026-05-31
-
+**Last Updated:** 2026-06-03
 > **AI CONTEXT:** This document is the authoritative technical reference. Read this FIRST for any technical question. Do not guess architectural patterns — verify here.
 
 ---
@@ -151,6 +150,7 @@ Q -. "🟢" .-> T
 ```
 
 **Chú thích màu sắc:**
+
 - ✅ Mũi tên xanh lá (liền): Nhánh ĐÚNG — luồng logic chính
 - ❌ Mũi tên đỏ (liền): Nhánh SAI — rollback hoặc điều kiện thất bại
 - 🟡 Mũi tên vàng (liền): SAI / LẶP — tạo vòng lặp combo chain
@@ -208,6 +208,18 @@ Q -. "🟢" .-> T
 4. Màu **xanh lá nét đứt**: Truyền tin sự kiện đúng
 5. Màu **vàng nét đứt**: Truyền tin để lặp (chain combo)
 6. Màu **đỏ nét đứt**: Truyền tin lỗi từ "Vị trí thả Snap" → "Đặt đĩa thất bại" — chỉ để chạy hoạt ảnh báo người chơi đặt sai
+
+### Merge & Purge Rules (Zero-Deadlock)
+
+Để ngăn chặn các lỗi lặp vô hạn (Infinite Bounce/Pull Loop) khi các đĩa bánh giao tiếp, hệ thống áp dụng các đạo luật thép sau:
+
+1. **Focus Identity (Định danh tập trung):** Khi đĩa chưa đầy, nó CHỈ ĐƯỢC PHÉP HÚT loại bánh mà nó đang sở hữu với số lượng nhiều nhất (Đa số). Tránh việc tự hút rác ngược vào người sau khi đã xả.
+2. **Global Purging State (Trạng thái Xả Rác):** Khi bất kỳ đĩa nào (Priority 0-9) bị đầy (6/6) nhưng không tinh khiết, nó kích hoạt cờ `IsPurging = true`. Lúc này đĩa BỊ CẤM HÚT, chỉ được phép ĐẨY (Push) các loại bánh thiểu số đi. Nó sẽ giữ cờ này đến khi đẩy sạch rác và trở nên tinh khiết.
+3. **Anti-Bounce (Chống dội rác):** 
+   - Một đĩa đang xả rác TUYỆT ĐỐI KHÔNG được ném rác vào một đĩa lân cận đang có 5/6 miếng (vì ném vào sẽ làm đĩa kia đầy, kích hoạt Purging và dội ngược lại rác cũ), trừ khi miếng rác đó giúp đĩa kia nổ.
+   - Khi đang hút bánh, nếu một đĩa có 5/6 miếng, nó **CHỈ ĐƯỢC PHÉP HÚT loại bánh chiếm Đa Số** của nó. Tuyệt đối cấm hút bánh thiểu số (ngăn chặn lỗi 4:2 vs 4:4 bounce loop).
+4. **Smart Garbage Selection:** Khi cần xả rác, hệ thống ưu tiên ném vào đĩa đã có loại rác đó. Nếu không có đĩa nào phù hợp, hệ thống chọn đĩa đang có TỔNG SỐ LƯỢNG BÁNH ÍT NHẤT để ném (nhằm tránh làm nghẽn các đĩa sắp nổ).
+5. **No Swapping:** Cơ chế Swap (đổi 1 lấy 1) bị loại bỏ hoàn toàn để tránh vòng lặp đổi rác qua lại giữa 2 đĩa đầy.
 
 ---
 
@@ -287,6 +299,7 @@ Dưới đây là các hàm quan trọng đã được viết trong quá trình 
 ### GridManager (`Scripts/Core/GridManager.cs`)
 
 - `GenerateGrid(int levelId, int width, int height)`: Nhận thông số từ `LevelManager` để sinh mạng lưới Grid 3D ra giữa màn hình. Tích hợp thuật toán **Checkerboard** (lẻ/chẵn) xen kẽ.
+- `ProcessNextMerge()`: Vòng lặp đệ quy xử lý chuỗi combo liên hoàn (Cascade). Chứa luật **"Bloom Sort - Kẻ mạnh hút kẻ yếu"**: Một đĩa chỉ được phép hút miếng bánh nếu số lượng bánh loại đó của nó LỚN HƠN HOẶC BẰNG số lượng của đĩa lân cận. Kết hợp với việc đưa toàn bộ đĩa lân cận vào Queue khi đặt đĩa mới (`HandlePlatePlaced`), miếng bánh sẽ luôn tự động chảy về phía đĩa gần Đầy nhất. Điều này triệt tiêu hoàn toàn vòng lặp hút vô tận (Infinite Pull Loop) giữa các đĩa.
 - `ClearGrid()`: Dọn dẹp object lưới cũ trên scene.
 - `DrawGizmos(int width, int height)`: Vẽ khung preview cho Editor.
 - `GetCell(Vector2Int gridPos)`: Lấy nhanh tham chiếu `GridCell` dựa trên tọa độ mặt phẳng 2D. Rất hữu ích cho các thuật toán tìm đường hoặc lan truyền.
@@ -296,6 +309,7 @@ Dưới đây là các hàm quan trọng đã được viết trong quá trình 
 ### PizzaPlate (`Scripts/Gameplay/PizzaPlate.cs`)
 
 - Quản lý trạng thái và danh sách miếng pizza (`_slices[]`).
+- `GetAvailableTypes()`: Trả về danh sách các loại bánh hiện có trên đĩa, **được sắp xếp giảm dần theo số lượng**. Thuật toán "Sorting by Count" này đóng vai trò sống còn trong việc ngăn chặn 2 đĩa lân cận hút 1 loại bánh qua lại tạo thành vòng lặp vô hạn (Infinite Loop).
 - `TryAddSlice()` / `RemoveSliceOfType()`: Hỗ trợ thêm/bớt bánh an toàn với cơ chế SetParent giữ World Position (chống lỗi teleport).
 - `GetMajorityType()` / `GetMinorityType()`: Thuật toán tìm kiếm miếng bánh chiếm số lượng nhiều nhất (để hút thêm) và ít nhất (để đẩy đi khi kẹt đĩa).
 

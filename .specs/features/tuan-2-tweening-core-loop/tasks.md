@@ -115,6 +115,9 @@ Tuần 2 tập trung vào hai mảng song song:
   - Khi đĩa nổ → kích hoạt re-check lân cận (Combo Cascade).
   - **Verification:** Đảm bảo khi hút bánh, số lượng và type được chuyển đúng, và gọi `BezierTween` mượt mà, sau đó FSM chuyển đúng trạng thái. Đĩa nổ khi đủ 6 miếng cùng loại, và kích hoạt hút tiếp ở các đĩa xung quanh.
   - **File:** `Scripts/Core/GridManager.cs` (nâng cấp)
+  - thêm: tạo chuổi ưu tiên theo kiểu từ thấp đến cao là 0 -> 9 rồi thì phải cho nó chạy lần lượt từ 9 -> 0 chứ.
+  - Sao có cảm giác đặt đĩa này xong đĩa khác lại di chuyển pizza vậy?
+  - Bàn lưới/grid bị lấp đầy nhưng không thể để thêm được nữa thì game không chuyển sang trạng thái game over vì do phải cả lưới trên bàn và khay chứa phải đầy
 
 - [ ] **Task 3.2: Triển khai Game Over Detection**
   - Code logic kiểm tra điều kiện thua: Tất cả ô Grid **và** tất cả Hold Slots đều bị chiếm, **và** không còn bất kỳ merge hợp lệ nào.
@@ -123,7 +126,7 @@ Tuần 2 tập trung vào hai mảng song song:
   - **Verification:** Lấp đầy lưới + khay → game chuyển sang GameOverState, input bị lock, log "Game Over".
   - **File:** `Scripts/Core/GridManager.cs` hoặc `GameStateManager.cs`
 
-- [ ] **Task 3.3: Thiết lập Object Pooling**
+- [x] **Task 3.3: Thiết lập Object Pooling**
   - Tạo class `ObjectPool<T>` generic trong `Scripts/Utils/ObjectPool.cs`.
   - Pool các đối tượng: Miếng pizza bay (Bezier), VFX Particle nổ đĩa, Text điểm số bay.
   - Tích hợp vào flow: Khi cần spawn → lấy từ pool. Khi hoàn thành → trả lại pool.
@@ -146,12 +149,14 @@ Tuần 2 tập trung vào hai mảng song song:
   - **Verification:** Kéo đĩa qua lưới → thấy bóng mờ preview ở ô gần nhất. Thả vào ô có đĩa → rung lắc + bay về.
   - **File:** `Scripts/Core/InputManager.cs`, `Scripts/Gameplay/GhostMesh.cs` (mới)
 
-- [ ] **Task 4.3: Âm thanh & VFX phản hồi**
+- [x] **Task 4.3: Âm thanh & VFX phản hồi**
   - Tạo `AudioManager` trong `Scripts/Core/` quản lý SFX (đặt đĩa, nổ đĩa, combo cascade).
   - Tích hợp Pitch Shift: Mỗi lần nổ liên tục trong cùng combo → pitch tăng dần.
   - Thêm VFX Particle cơ bản cho nổ đĩa (lấy từ Object Pool).
+  - Cấu hình VFX Data-Driven tự scale theo kích thước bàn cờ.
   - **Verification:** Đặt đĩa có SFX. Combo nổ liên tục → âm thanh tăng pitch rõ rệt. VFX xuất hiện và tự trả về pool.
   - **File:** `Scripts/Core/AudioManager.cs` (mới)
+  - Không biết sao nhưng có lỗi logic quét các miếng pizza khi mà để các đĩa ở cạnh nhau mà có cách miếng pizza cùng loại nhưng trong đĩa cũng thêm vài miếng khác hoặc không có thì lại không tự di chuyển, vấn dề diễn ra khi đặt đĩa (tức đĩa đó ưu tiên 9)
 
 ---
 
