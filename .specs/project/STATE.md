@@ -1,6 +1,6 @@
 # STATE: Cheezy Savoround
 
-**Last Updated:** 2026-06-02
+**Last Updated:** 2026-06-12
 
 > **AI CONTEXT:** This document tracks the current state, active decisions, and known issues. Update it when major architectural decisions are made.
 
@@ -8,6 +8,12 @@
 
 ## 1. Recent Decisions (ADR)
 
+- **[2026-06-12] Khởi tạo Giao diện (UI) và Màn hình chính:** Hoàn thành việc dựng Canvas cho màn hình Lobby (Starter, Help, Achievement, Shop). Thiết lập phân cấp Panel ẩn/hiện chuẩn xác để chuẩn bị cho UIManager. Khắc phục lỗi hiển thị Sprite UI bằng cách điều chỉnh `.meta` và áp dụng kỹ thuật "Trim" cắt phần trong suốt của Sprite bằng `Sprite Editor` (Multiple Mode) nhằm giảm thiểu GPU Overdraw cho nền tảng Mobile. Sử dụng đồng bộ `Vertical/Horizontal Layout Group` và `Prefab` cho các item danh sách (Thành tựu) để đảm bảo đồng nhất thiết kế.
+- **[2026-06-12] Tối ưu hóa UI Text (Zero-GC):** Thống nhất quy tắc bắt buộc sử dụng `SetText("{0}/{1}", val1, val2)` của thư viện `TMPro` khi cập nhật chữ số biến động (như thanh tiến trình thành tựu) để tránh phát sinh chuỗi (string allocation), duy trì luật Zero-GC của dự án. Áp dụng `Image (Filled)` thay cho `Slider` để làm thanh tiến trình, loại bỏ hoàn toàn lỗi hiển thị viền đỏ rác.
+- **[2026-06-12] Khởi tạo Hệ thống Save/Load JSON:** Đã tạo `PlayerData.cs` và Singleton `SaveLoadManager.cs`. Cấu trúc JSON hỗ trợ lưu Vàng (Gold), Skin đã mở khóa (UnlockedSkins), Skin hiện tại, thời gian nhận Daily Reward (UTC) và Tiến trình thành tựu (AchievementSaveData). Singleton `SaveLoadManager` sẽ dùng `DontDestroyOnLoad` để tự duy trì, không bị hủy giữa các scene.
+- **[2026-06-12] Zero-GC Game Over Detection:** Triển khai hàm `CheckGameOver()` trong `GridManager`. Game Over chỉ xảy ra khi: (1) Lưới hoàn toàn đầy và (2) Không còn bất kỳ bước merge nào hợp lệ giữa các đĩa. Quá trình quét duyệt 4 hướng sử dụng `_gameOverTypeBuffer` được khởi tạo từ trước để tái sử dụng, đảm bảo Zero-GC allocation trong lúc quét, bảo vệ frame rate trên Mobile. Hàm này được trigger qua event `OnRefillComplete` của `TrayManager`.
+- **[2026-06-12] Tách biệt Local BFS & Giữ nguyên hàng đợi (Queue):** Hàm `CalculatePriorities()` cũ reset toàn bộ lưới về Priority 0 trước khi chạy BFS, gây phá vỡ trật tự của các đĩa đang chờ trong `_cellsToProcess` khi có combo liên hoàn. Đã tạo thêm `CalculateLocalPriorities(GridCell epicenter)` chỉ thực hiện quét 1 lớp lân cận và **chỉ nâng** (không hạ) Priority lên 8. Điều này giữ nguyên các đĩa ưu tiên cũ trong hàng đợi, đảm bảo Combo Cascade (nổ dây chuyền) diễn ra chính xác.
+- **[2026-06-12] Per-slot Refill (Sinh đĩa tức thì):** Thay đổi logic của `TrayManager`: Không chờ cả 3 slot trống mới sinh, mà sinh đĩa mới **ngay lập tức** cho slot nào vừa trống sau khi người chơi đặt đĩa thành công (như cơ chế của các game casual hiện đại). Khay sẽ báo event `OnRefillComplete` khi tất cả các slot trống đều đã nhận được đĩa mới.
 - **[2026-06-03] Anti-Bounce Loop triệt để (Chống hút ngược):** Sửa lỗi lặp vô hạn (Bounce Loop 4:2 vs 4:4) khi một đĩa vừa xả rác xong lại đi hút chính loại rác đó về. Áp dụng thêm Luật Thép: "Nếu một đĩa đang ở trạng thái 5/6 (chỉ còn 1 chỗ trống), nó CHỈ ĐƯỢC PHÉP HÚT loại bánh chiếm Đa Số trên đĩa". Điều này ép đĩa phải chờ đợi loại bánh phù hợp để nổ, thay vì hút bậy bạ loại thiểu số để rồi bị đầy 6/6 và lập tức xả rác ra lại.
 - **[2026-06-02] FSM Deadlock & Đồng bộ hóa Nổ đĩa:** Sửa lỗi kẹt Game State không cho kéo đĩa sau khi đĩa Tâm Chấn (Priority 9) nổ. Quyết định thay đổi kiến trúc: Hủy bỏ đặc quyền "Nổ sau cùng" của đĩa Priority 9. Giờ đây MỌI đĩa (kể cả 9) khi đạt 6/6 tinh khiết sẽ nổ NGAY LẬP TỨC bên trong `ProcessNextMerge` và đều chia sẻ chung một lệnh Tween delay 0.4s. Code xử lý nổ thừa trong `CleanupPrivilegedPlates` đã bị xóa, giúp dọn dẹp hoàn toàn Dead code và lỗi nổ đồng loạt 1 frame.
 - **[2026-06-02] DOTween & Object Pool UI (Zero Hardcoding):** Cài đặt và tích hợp DOTween cho hệ thống chữ Floating Text (báo điểm). Giải quyết triệt để bài toán UI trong môi trường Top-Down 3D: Chữ tự động xoay song song lăng kính Camera và bay mượt mà lên trên màn hình nhờ vector `Camera.main.transform.up` thay vì trục Y tuyệt đối. Loại bỏ hoàn toàn các dòng code can thiệp Scale và Màu sắc (Color) từ Script, trả lại 100% quyền tùy biến thiết kế cho Designer qua Inspector (TextMeshPro Auto Size/Gradient). Cấy lệnh `DOKill()` để đảm bảo an toàn tuyệt đối khi Object Pool tái sử dụng UI.
@@ -25,7 +31,7 @@
 
 ## 2. Blockers
 
-- **Scripts/UI/ đang trống:** Chưa có script UI nào được tạo (HUD, Score). Tiến độ hiện tại cần chuyển sang Phase 2 (Tweening, Merge Logic) rồi mới ghép UI.
+- **Chưa có Code Logic cho UI:** Phần thiết kế giao diện tĩnh (Visual, Prefab, Layout) cho các màn hình (Starter, Help, Achievement, Shop) đã hoàn thành. Cần ưu tiên viết `UIManager.cs` để điều hướng màn hình và `ShopManager.cs` để kết nối logic mua sắm với hệ thống Save/Load JSON.
 
 ## 3. Lessons Learned
 

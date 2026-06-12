@@ -322,6 +322,13 @@ Dưới đây là các hàm quan trọng đã được viết trong quá trình 
 - `ClearTray()`: Hủy toàn bộ anchor + xóa tham chiếu đĩa.
 - `DrawGizmos(int slotCount)`: Vẽ khung preview cho Editor.
 
+### SaveLoadManager (`Scripts/Core/SaveLoadManager.cs`)
+
+- **Static Class:** Quản lý toàn bộ việc lưu/tải dữ liệu người chơi. Sử dụng `[RuntimeInitializeOnLoadMethod]` để tự động gọi `Load()` trước khi scene đầu tiên chạy, giải quyết hoàn toàn lỗi `Destroy()` theo luật Zero-GC / Anti-Vibe.
+- Sử dụng `JsonUtility` để ghi và đọc object `PlayerData` xuống file JSON tại `Application.persistentDataPath`.
+- `Load()`: Đọc JSON. Nếu file hỏng hoặc chưa có, tự động tạo mới qua `ResetData()`.
+- `Save()`: Serialize `PlayerData` và lưu đè xuống disk.
+
 ### LevelGenerator (`Scripts/Editor/LevelGenerator.cs`)
 
 - `Generate()`: Công cụ Tooling sinh hàng loạt file JSON (`Tools > Generate 30 Levels`). Giúp team tạo Data giả lập nhanh chóng.

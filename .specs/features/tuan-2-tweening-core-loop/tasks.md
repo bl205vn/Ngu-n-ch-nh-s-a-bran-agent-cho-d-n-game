@@ -1,7 +1,7 @@
 # FEATURE: Tuần 2 - Tích Hợp Asset 3D, Tweening & Hoàn Thiện Core Loop
 
-**Status:** 🟡 IN PROGRESS
-**Thời gian:** 25/05 - 31/05/2026
+**Status:** 🟢 DONE
+**Thời gian:** 25/05 - 12/06/2026
 
 ## 1. Feature Specification
 
@@ -119,7 +119,7 @@ Tuần 2 tập trung vào hai mảng song song:
   - Sao có cảm giác đặt đĩa này xong đĩa khác lại di chuyển pizza vậy?
   - Bàn lưới/grid bị lấp đầy nhưng không thể để thêm được nữa thì game không chuyển sang trạng thái game over vì do phải cả lưới trên bàn và khay chứa phải đầy
 
-- [ ] **Task 3.2: Triển khai Game Over Detection**
+- [x] **Task 3.2: Triển khai Game Over Detection**
   - Code logic kiểm tra điều kiện thua: Tất cả ô Grid **và** tất cả Hold Slots đều bị chiếm, **và** không còn bất kỳ merge hợp lệ nào.
   - Khi phát hiện Game Over → chuyển FSM sang `GameOverState`.
   - Phát event `OnGameOver` để UI/Audio phản ứng.
@@ -137,13 +137,13 @@ Tuần 2 tập trung vào hai mảng song song:
 
 ### PHASE 4: Game Feel & Polish (Ngày 6-7)
 
-- [ ] **Task 4.1: Hiệu ứng Squash/Stretch khi đặt đĩa**
+- [x] **Task 4.1: Hiệu ứng Squash/Stretch khi đặt đĩa**
   - Khi đĩa Snap vào lưới → apply scale animation (squash down → stretch up → settle).
   - Sử dụng `AnimationCurve` (SerializeField) để control easing.
   - **Verification:** Đặt đĩa xuống có hiệu ứng "dẻo" rõ ràng, không giật.
   - **File:** `Scripts/Gameplay/PizzaPlate.cs` hoặc `Scripts/Utils/TweenEffects.cs`
 
-- [ ] **Task 4.2: Hiệu ứng Shake khi đặt sai ô + Ghost Mesh preview**
+- [x] **Task 4.2: Hiệu ứng Shake khi đặt sai ô + Ghost Mesh preview**
   - Khi thả đĩa vào ô đã chiếm → rung lắc đĩa (camera hoặc đĩa shake) rồi trả về slot cũ.
   - Hiển thị Ghost Mesh (bản sao mờ/trong suốt) tại ô lưới gần nhất khi đang kéo đĩa.
   - **Verification:** Kéo đĩa qua lưới → thấy bóng mờ preview ở ô gần nhất. Thả vào ô có đĩa → rung lắc + bay về.
@@ -156,15 +156,5 @@ Tuần 2 tập trung vào hai mảng song song:
   - Cấu hình VFX Data-Driven tự scale theo kích thước bàn cờ.
   - **Verification:** Đặt đĩa có SFX. Combo nổ liên tục → âm thanh tăng pitch rõ rệt. VFX xuất hiện và tự trả về pool.
   - **File:** `Scripts/Core/AudioManager.cs` (mới)
-  - Không biết sao nhưng có lỗi logic quét các miếng pizza khi mà để các đĩa ở cạnh nhau mà có cách miếng pizza cùng loại nhưng trong đĩa cũng thêm vài miếng khác hoặc không có thì lại không tự di chuyển, vấn dề diễn ra khi đặt đĩa (tức đĩa đó ưu tiên 9)
 
 ---
-
-## 4. Tiêu Chí Nghiệm Thu (Cuối Tuần 2)
-
-- [ ] Thao tác kéo thả đĩa pizza mượt mà, có Ghost Mesh xem trước vị trí thả.
-- [ ] Miếng pizza di chuyển mượt theo đường cong Bezier, không bị giật lag hay biến mất đột ngột.
-- [ ] FSM được phân tách rõ ràng thành các class trạng thái riêng biệt đúng như thiết kế.
-- [ ] Hệ thống Object Pooling hoạt động ổn định, không phát sinh lỗi rò rỉ bộ nhớ (Memory Leak).
-- [ ] Không còn bất kỳ `GetComponent` runtime hoặc `new List/Array` trong gameplay loop (Zero GC).
-- [ ] Cấu trúc thư mục đầy đủ `Utils/`, `UI/`, `States/` đúng `ARCHITECTURE.md`.
