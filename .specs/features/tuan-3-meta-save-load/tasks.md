@@ -44,12 +44,17 @@ Tuần 3 tập trung vào việc xây dựng các hệ thống Meta Game xung qu
   - Định nghĩa danh sách vật phẩm: ID, Tên, Giá vàng, Prefab Mesh (hoặc Material).
   - **File:** `Scripts/Data/ShopConfig.cs` (ScriptableObject)
 
-- [ ] **Task 2.2: Lập trình UI Shop**
-  - Màn hình Shop lấy dữ liệu từ `ShopConfig` để sinh các nút mua.
-  - Logic mua: Check vàng -> Trừ vàng -> Thêm skin vào `UnlockedSkins` -> Lưu file.
+- [x] **Task 2.2: Thiết kế Visual/Layout UI (Lobby, Shop, HUD Ingame, Game Over)**
+  - Chia 2 tầng Canvas (Camera cho nền lót sàn, Overlay cho Nút bấm/HUD) khắc phục lỗi đè 3D.
+  - Setup UI Shop dạng Carousel (1 Khung Item dùng chung, đổi mảng dữ liệu qua Tab). Tối ưu Tab không dùng ảnh riêng mà dùng Color (Gray/White).
+  - Setup Game Over Overlay bật `Raycast Target` làm Dimmer chặn tương tác 3D.
+
+- [x] **Task 2.3: Lập trình Logic UI Shop & UIManager**
+  - Code `ShopManager.cs`: Đọc `ShopConfig`, chuyển dữ liệu Carousel, tự sinh các Dots (Pagination).
+  - Logic mua: Check vàng -> Trừ vàng -> Lưu `UnlockedSkins`.
   - **File:** `Scripts/UI/ShopManager.cs`
 
-- [x] **Task 2.3: Tích hợp Skin vào Gameplay**
+- [x] **Task 2.4: Tích hợp Skin vào Gameplay**
   - Khi `TrayManager` hoặc `PizzaPlate` sinh đĩa, đọc `CurrentSkinId` từ `PlayerData` để áp dụng đúng Mesh/Material mới.
   - **File:** `Scripts/Gameplay/PizzaPlate.cs` (cập nhật)
 

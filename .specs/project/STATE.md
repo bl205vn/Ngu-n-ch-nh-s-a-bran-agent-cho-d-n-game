@@ -1,6 +1,6 @@
 # STATE: Cheezy Savoround
 
-**Last Updated:** 2026-06-12
+**Last Updated:** 2026-06-13
 
 > **AI CONTEXT:** This document tracks the current state, active decisions, and known issues. Update it when major architectural decisions are made.
 
@@ -8,6 +8,18 @@
 
 ## 1. Recent Decisions (ADR)
 
+- **[2026-06-13] Shop UI & Skin System:**
+  - **Shop Manager**: 
+    - Đã triển khai thuật toán băng chuyền (Carousel) với cấu trúc Data-Driven `ShopCategory` giúp thay thế giao diện (Background, Nền vật phẩm, Bảng giá) tuỳ theo Tab (Boost, Coin, Skin) mà không sinh rác (Zero-GC).
+    - Tích hợp thành công **3D Skin Preview**: Render trực tiếp mô hình `PizzaPlate` vào giữa giao diện Shop, tự động xoay và áp dụng Material (`Main_Texture`) từ `ShopConfig`.
+      - *VFX Quyết định (Rotation)*: Cố tình sử dụng `Space.World` kết hợp độ nghiêng `_modelTiltAngle` (Thay vì `Space.Self`). Dù điều này tạo ra hiệu ứng hơi lắc nhẹ (UFO wobble) do Pivot lệch tâm, nhưng về mặt thị giác trong UI, kiểu xoay này tạo cảm giác không gian 3D sống động và sinh động hơn là xoay phẳng tuyệt đối. Đã phơi bày cấu hình (`_modelScale`, `_modelRotationSpeed`, `_modelTiltAngle`) ra Inspector (Zero-Hardcoding).
+    - Hoàn thiện logic **Mua & Trang Bị Skin**: Tự động liên kết với dữ liệu lưu trữ `PlayerData` (`Gold`, `UnlockedSkins`, `CurrentSkinId`), cập nhật giá và trạng thái theo thời gian thực.
+  - **Raycast Management**: 
+    - Khóa vật lý (Raycast Target) cho các thành phần nền và UI tĩnh để tránh lỗi kẹt input trên Mobile. Mọi tương tác chạm chỉ kích hoạt khi Game FSM chuyển sang `PlayingState`. Khởi tạo `UIManager.cs` với hàm `StartGame()` để gắn vào nút Start. Đồng thời áp dụng luật cấm Raycast xuyên UI (`EventSystem.current.IsPointerOverGameObject()`) vào `InputManager` để triệt tiêu hoàn toàn lỗi đè hình (click lọt lưới).
+
+- **[2026-06-13] Configurable Target FPS:** Đã thêm cấu hình `TargetFPS` vào `GameSettings` (lưu trong `playerdata.json`). `SaveLoadManager` sẽ tự động đọc và khóa FPS (`Application.targetFrameRate`) theo thông số này ngay khi khởi động, tuân thủ Data-Driven.
+
+- **[2026-06-13] Hoàn thiện Kiến trúc đa Canvas UI (Zero-GC & Responsive):** Chốt phương án chia để trị cho giao diện: Sử dụng Canvas `Screen Space - Camera` (Plane Distance 100) để vẽ nền 2D gạch lót dưới đáy môi trường 3D. Đồng thời thiết lập `HUDCanvas` độc lập với chế độ `Screen Space - Overlay` để đè hệ thống nút bấm (TopBar, Boosters, GameOver) lên trên cùng, khắc phục lỗi đè hình. UI Shop (Lobby) chốt thiết kế Carousel 1 Khung dùng chung, quản lý chuyển Tab bằng thay đổi màu sắc (Color Tint) và TextMeshPro để tuân thủ tuyệt đối Zero-GC. Bảng GameOver bật `Raycast Target` làm "Bức tường khiên" chặn click lọt xuống các tương tác 3D.
 - **[2026-06-12] Khởi tạo Giao diện (UI) và Màn hình chính:** Hoàn thành việc dựng Canvas cho màn hình Lobby (Starter, Help, Achievement, Shop). Thiết lập phân cấp Panel ẩn/hiện chuẩn xác để chuẩn bị cho UIManager. Khắc phục lỗi hiển thị Sprite UI bằng cách điều chỉnh `.meta` và áp dụng kỹ thuật "Trim" cắt phần trong suốt của Sprite bằng `Sprite Editor` (Multiple Mode) nhằm giảm thiểu GPU Overdraw cho nền tảng Mobile. Sử dụng đồng bộ `Vertical/Horizontal Layout Group` và `Prefab` cho các item danh sách (Thành tựu) để đảm bảo đồng nhất thiết kế.
 - **[2026-06-12] Tối ưu hóa UI Text (Zero-GC):** Thống nhất quy tắc bắt buộc sử dụng `SetText("{0}/{1}", val1, val2)` của thư viện `TMPro` khi cập nhật chữ số biến động (như thanh tiến trình thành tựu) để tránh phát sinh chuỗi (string allocation), duy trì luật Zero-GC của dự án. Áp dụng `Image (Filled)` thay cho `Slider` để làm thanh tiến trình, loại bỏ hoàn toàn lỗi hiển thị viền đỏ rác.
 - **[2026-06-12] Khởi tạo Hệ thống Save/Load JSON:** Đã tạo `PlayerData.cs` và Singleton `SaveLoadManager.cs`. Cấu trúc JSON hỗ trợ lưu Vàng (Gold), Skin đã mở khóa (UnlockedSkins), Skin hiện tại, thời gian nhận Daily Reward (UTC) và Tiến trình thành tựu (AchievementSaveData). Singleton `SaveLoadManager` sẽ dùng `DontDestroyOnLoad` để tự duy trì, không bị hủy giữa các scene.
@@ -31,7 +43,7 @@
 
 ## 2. Blockers
 
-- **Chưa có Code Logic cho UI:** Phần thiết kế giao diện tĩnh (Visual, Prefab, Layout) cho các màn hình (Starter, Help, Achievement, Shop) đã hoàn thành. Cần ưu tiên viết `UIManager.cs` để điều hướng màn hình và `ShopManager.cs` để kết nối logic mua sắm với hệ thống Save/Load JSON.
+- **Chưa có Code Logic cho UI:** Toàn bộ phần thiết kế giao diện tĩnh (Visual, Prefab, Layout) cho các màn hình (Lobby, Shop, In-Game HUD, Game Over) đã hoàn thiện 100% cực kỳ chuẩn mực về kiến trúc đa Canvas (Overlay vs Camera). Giờ chỉ còn chờ viết Code Logic (`UIManager.cs` và `ShopManager.cs`) để vận hành.
 
 ## 3. Lessons Learned
 
