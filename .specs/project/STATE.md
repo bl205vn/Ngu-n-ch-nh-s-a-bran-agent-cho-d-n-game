@@ -1,12 +1,53 @@
 # STATE: Cheezy Savoround
 
-**Last Updated:** 2026-06-13
+**Last Updated:** 2026-06-15
 
 > **AI CONTEXT:** This document tracks the current state, active decisions, and known issues. Update it when major architectural decisions are made.
 
 ---
 
 ## 1. Recent Decisions (ADR)
+
+- **[2026-06-16] Booster System Architecture & Zero-GC Polish:**
+  - **Data-Driven & Pattern Matching:** Triển khai thành công 4 loại Booster (Cutter, Sauce, Move, Trash) theo đúng sát thiết kế GDD.
+    - `Cutter`: Đĩa mục tiêu thiếu -> Tìm ô kề cạnh trống -> Spawn đĩa mới bù đắp, ép nổ.
+    - `Sauce`: Đĩa mục tiêu chờ -> Spawn trực tiếp miếng đa số vào đĩa để đạt 6/6 -> Kích nổ.
+    - `Move`: Kéo nhấc 1 đĩa lên và đặt vào ô trống (tái sử dụng InputManager drag-and-drop).
+    - `Trash`: Nhấn đĩa bất kì để xoá.
+  - **Zero-GC & Hot-Path Optimizations:**
+    - Thay thế `FindObjectsByType` bằng static lists (Registry pattern) cho `GoldDisplay`.
+    - Biến `HitDistanceComparer` thành `class` để chặn Boxing Alloc khi `.Sort()` Array trong Update.
+    - Caching `Queue<GridCell>` và `HashSet<GridCell>` cho thuật toán BFS trong `CalculateLocalPriorities`, giải quyết triệt để memory allocation / leak khi chuỗi Cascade liên tục nổ.
+  - **UI Toggle & Raycast Control:** Xây dựng hệ thống Toggle an toàn cho `BoostButton`, block hoàn toàn Drag mặc định của `InputManager` khi đang ở trạng thái chọn mục tiêu (TrashTarget/MoveSource). Tự động trả về `Idle` khi người chơi huỷ.
+
+- **[2026-06-15] Robust Time-Validation (Anti-Cheat) cho Daily Reward:**
+  - **Server-Time Provider:** Khởi tạo `ServerTimeProvider` sử dụng `UnityWebRequest.Head("https://www.google.com")` để lấy Header `Date`. Kỹ thuật này giúp lấy chuẩn giờ quốc tế mà không tốn chi phí duy trì backend riêng.
+  - **Offline Offset Validation:** Giải quyết triệt để bài toán "Game Offline vẫn chống được Hack giờ". `TimeValidationData` lưu lại cả `LastVerifiedServerTicks` và `LastVerifiedDeviceTicks` khi có mạng. Khi rớt mạng, hệ thống tự ước lượng giờ thật dựa vào chênh lệch (Offset) của giờ máy tính. Cảnh báo và phạt reset chuỗi 7 ngày nếu đếm được `SuspiciousJumpCount >= 3`.
+
+- **[2026-06-14] Dynamic Board State & Progression Persistence:**
+  - **Lưu trạng thái LevelProgressData:** Tích hợp `occupiedCells`, `traySlots`, và `currentScore` vào JSON để phục hồi hoàn toàn mạch chơi khi thoát game giữa chừng. 
+  - **Tối ưu Khôi phục Tray (Zero-GC):** LevelManager truyền cờ `refillImmediately = false` cho `TrayManager` nếu phát hiện có file Save, giúp Tray không sinh 3 đĩa mới dư thừa rồi vứt đi, loại bỏ Memory Allocation vô ích lúc khởi động.
+  - **Mobile Application Lifecycle Hooks:** Tích hợp `OnApplicationPause(true)` và `OnApplicationQuit` vào `GameStateManager` để "bắt" khoảnh khắc người chơi vuốt tắt game hoặc chuyển đa nhiệm trên điện thoại, đồng thời đổ dữ liệu từ RAM xuống Disk khẩn cấp, bảo toàn tiền và tiến độ ván cờ.
+
+- **[2026-06-14] Gold Economy & Dynamic Skin Sync:**
+  - **Kinh tế Vàng (Gold Economy):** Hệ thống tách biệt logic, `SaveLoadManager` hứng Event `OnPlateExploded` để cộng dồn vàng vào RAM mà KHÔNG I/O lưu file liên tục (chỉ lưu file khi chuyển Scene hoặc Pause app).
+  - **Dynamic Skin Update:** Khởi tạo `GameEvents.OnSkinChanged`. Khi mua và trang bị từ Shop, mọi đĩa Pizza đang tồn tại trên Lưới và Khay tự động nghe sự kiện này và đổi Material ngay lập tức, không cần tải lại Scene.
+
+- **[2026-06-14] Transit Station Logic (Priority 9) & Memory Leak Fix:**
+  - **Epicenter Relay Mechanics (Trạm trung chuyển):** Đã hoàn thiện logic đĩa tâm chấn (Priority 9) trong `GridManager`. Đổi điều kiện `FindSelfExplodeType` từ cứng nhắc (>= 6) sang kiểm tra linh hoạt `availableFromNeighbors >= needed`, giúp lưới lớn (như 4x6) không bị nghẽn ở Phase 1. Nới lỏng kiểm tra Anti-Bounce ở Phase 2, cho phép đĩa epicenter tạm thời đầy 6/6 (dù dơ) để làm trạm trung chuyển bánh giữa các lân cận.
+  - **Multi-Epicenter Cache Fix:** Nhằm giải quyết triệt để lỗi ghi đè dữ liệu khi có >2 tâm chấn nổ combo đồng thời, hệ thống `_pendingRelay` (cache relay 2-bước) được đổi sang cấu trúc `Dictionary<GridCell, (int, GridCell)>`. Mỗi epicenter sẽ giữ riêng thông tin trung chuyển của mình, bảo đảm không còn bị lỗi side-effect.
+  - **Tie-breaker FIFO Queue:** Tích hợp bộ đếm `_enqueueOrder` trong `_cellsToProcess` để duy trì trật tự FIFO cho các cell có cùng Priority. Điều này giúp các đĩa ưu tiên hoàn thiện mạch combo trung chuyển của nó trước khi bị đĩa khác chen ngang.
+  - **DOTween Memory Leak Fix:** Thêm lệnh `CancelAllTweens()` cho `BezierTween` và gọi `DOKill()` trên mọi thành phần Transform của `PizzaPlate` lẫn `PizzaSliceVisual` khi thực hiện `ClearGrid()` hoặc `ClearTray()`. Chặn đứng `MissingReferenceException` lúc tái tạo lưới qua các level khác nhau.
+
+- **[2026-06-14] Combo Scoring Logic & UI Separation:**
+  - **Kiến trúc Tách biệt Logic - View:** Refactor hoàn toàn hàm `EvaluateTurnCombo()` trong `GridManager`. Logic tính điểm (thực thi Event `TriggerComboAchieved` và `TriggerPlateExploded`) diễn ra NGAY LẬP TỨC ở cuối chuỗi chain, không bị kẹt hay delay. Ngược lại, phần View (hiển thị Text UI) được đẩy vào `DOVirtual.DelayedCall(_comboRevealDelay)` để canh timing chuẩn xác, chờ chữ `+100` của đĩa cuối cùng mờ đi mới ném chữ `Combo xN!` lên giữa màn hình. Điều này đảm bảo UI không thể làm nghẽn Data Game State.
+  - **Tránh Lỗi Closure Capture (Lambda Race Condition):** Sửa lỗi hiển thị sai Combo (nhảy về x0) khi người chơi thả đĩa quá nhanh trong lúc delay text. Các biến trạng thái (`_explosionCountThisTurn` và `centerPos`) được sao chép ra local variable trước khi đưa vào Lambda closure để đảm bảo giữ đúng giá trị của lượt đánh đó.
+  - **Tối ưu Hiển thị Feedback:** Đã gỡ bỏ dòng text `+Bonus`, chỉ giữ lại `Combo xN!` để giữ màn hình gọn gàng theo chuẩn Hyper-Casual, nhưng số điểm Bonus thực tế vẫn được cộng ngầm cực kì chính xác (`Base * Số Đĩa * 1.5 - Base đã cộng trước đó`).
+
+- **[2026-06-14] Shop Architecture & Zero-GC Polish:**
+  - **Data-Driven ShopConfig:** Hoàn tất việc chuyển dời toàn bộ cấu hình (Skins, Boosters, CoinPacks) vào một ScriptableObject duy nhất (`ShopConfig.cs`). Tinh giản `ShopCategory`, dọn dẹp Inspector. ShopManager linh hoạt đọc thông tin vật phẩm theo thời gian thực.
+  - **Zero-GC UI Text:** Refactor 100% `ShopManager.cs`, đổi `.text =` sang `.SetText("{0}", value)`. Xóa bỏ hoàn toàn `.ToString()` và toán tử cộng chuỗi để chặn triệt để Memory Allocation trong lúc cập nhật UI.
+  - **Dynamic Save Data Expansion:** Nâng cấp tính năng lưu Boosters. Tự động kiểm tra và mở rộng mảng `BoostersOwned` (`List.Add(0)`) đảm bảo tương thích mượt mà với các file Save cũ, chống lỗi IndexOutOfRange.
 
 - **[2026-06-13] Shop UI & Skin System:**
   - **Shop Manager**: 
@@ -43,7 +84,7 @@
 
 ## 2. Blockers
 
-- **Chưa có Code Logic cho UI:** Toàn bộ phần thiết kế giao diện tĩnh (Visual, Prefab, Layout) cho các màn hình (Lobby, Shop, In-Game HUD, Game Over) đã hoàn thiện 100% cực kỳ chuẩn mực về kiến trúc đa Canvas (Overlay vs Camera). Giờ chỉ còn chờ viết Code Logic (`UIManager.cs` và `ShopManager.cs`) để vận hành.
+- **Chưa có (Hoặc chờ test):** Các module Logic UI, Store, Save/Load và Board State đều đã hoàn tất và kết nối thành công. Hiện tại không có blocker nghiêm trọng.
 
 ## 3. Lessons Learned
 

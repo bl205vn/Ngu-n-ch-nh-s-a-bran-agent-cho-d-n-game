@@ -39,7 +39,7 @@ Phát triển một tựa game Casual (Puzzle/Sort) dựa trên lối chơi củ
 
 ### Current Stack
 
-- **Engine:** Unity 3D (URP)
+- **Engine:** Unity 3D (URP) - Version 6000.0.74f1
 - **Ngôn ngữ:** C#
 - **Kiến trúc:** Finite State Machine (FSM), Observer Pattern (Event System)
 - **Data-driven:** JSON và ScriptableObjects

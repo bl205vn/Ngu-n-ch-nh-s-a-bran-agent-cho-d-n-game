@@ -1,6 +1,6 @@
 # ARCHITECTURE: Cheezy Savoround
 
-**Last Updated:** 2026-06-03
+**Last Updated:** 2026-06-15
 > **AI CONTEXT:** This document is the authoritative technical reference. Read this FIRST for any technical question. Do not guess architectural patterns — verify here.
 
 ---
@@ -220,6 +220,11 @@ Q -. "🟢" .-> T
    - Khi đang hút bánh, nếu một đĩa có 5/6 miếng, nó **CHỈ ĐƯỢC PHÉP HÚT loại bánh chiếm Đa Số** của nó. Tuyệt đối cấm hút bánh thiểu số (ngăn chặn lỗi 4:2 vs 4:4 bounce loop).
 4. **Smart Garbage Selection:** Khi cần xả rác, hệ thống ưu tiên ném vào đĩa đã có loại rác đó. Nếu không có đĩa nào phù hợp, hệ thống chọn đĩa đang có TỔNG SỐ LƯỢNG BÁNH ÍT NHẤT để ném (nhằm tránh làm nghẽn các đĩa sắp nổ).
 5. **No Swapping:** Cơ chế Swap (đổi 1 lấy 1) bị loại bỏ hoàn toàn để tránh vòng lặp đổi rác qua lại giữa 2 đĩa đầy.
+6. **Transit Station (Trạm trung chuyển - Priority 9):** Đĩa tâm chấn (nơi người chơi vừa đặt) được xử lý ưu tiên với cơ chế 3 pha:
+   - *Phase 1 (Self-Explode):* Quét toàn bộ hàng xóm, nếu thấy có thể gom đủ 6 miếng của một loại (khả thi) → Hút về để tự nổ.
+   - *Phase 2 (Relay):* Nếu không thể nổ, epicenter đóng vai trò trung chuyển. Nó sẽ hút loại bánh "lạc lõng" từ một hàng xóm ít bánh, giữ tạm (dù có thể thành 6/6 không tinh khiết) và lập tức đẩy sang hàng xóm đang chứa nhiều bánh loại đó hơn. Sử dụng bộ đệm riêng biệt (`Dictionary<GridCell, (int, GridCell)> _pendingRelays`) để lưu trữ dữ liệu trung chuyển nhằm chống đè chéo khi có nhiều tâm chấn cùng lúc.
+   - *Phase 3 & 4:* Xử lý hút / xả rác bình thường nếu 2 pha trên thất bại.
+7. **Tie-breaker FIFO Queue:** Khi lưới có nhiều đĩa cùng mức ưu tiên (đặc biệt là Priority 9), hệ thống sử dụng bộ đếm `_enqueueOrder` để xử lý theo thứ tự FIFO (Vào trước ra trước). Đảm bảo các chuỗi combo và chuỗi relay trung chuyển không bị ngắt quãng bởi đĩa khác.
 
 ---
 
@@ -234,6 +239,9 @@ Q -. "🟢" .-> T
 
 **Location:** Cốt lõi giao tiếp giữa Logic và Hiển thị.
 **Purpose:** Giảm Tight Coupling. UI và Audio sẽ lắng nghe (listen) các event như `OnPizzaMerged`, `OnComboAchieved` thay vì bị gọi trực tiếp từ code Logic.
+**Quy tắc Separation of Logic and View:**
+- **Logic ưu tiên tuyệt đối:** Mọi sự kiện liên quan đến dữ liệu (như cộng điểm `TriggerPlateExploded`) phải được kích hoạt NGAY LẬP TỨC khi FSM chuyển trạng thái (VD: Kết thúc `CheckingComboState`). Tuyệt đối không được bọc event logic bên trong các hàm delay hay coroutine chờ UI.
+- **View phản ứng độc lập:** Các hiệu ứng UI (như thả chữ `Combo x3!`) có thể dùng `DOVirtual.DelayedCall` để chờ nhịp hoạt ảnh trước đó kết thúc (VD: chờ chữ `+100` mờ đi), nhưng chúng không được phép cản trở luồng chạy của dữ liệu. Biến truyền vào View closure phải được sao lưu local (Capture by value) để tránh rủi ro Race Condition khi logic đã bước sang lượt tiếp theo.
 
 ### Object Pooling
 
@@ -242,8 +250,8 @@ Q -. "🟢" .-> T
 
 ### Data-Driven Design
 
-**Location:** Cấu trúc Level và Item.
-**Purpose:** Tách rời cấu hình ra khỏi code. Sử dụng JSON để lưu tiến trình (Vàng, Skin, Daily Reward) và cấu hình Level động.
+**Location:** Cấu trúc Level, Item và Shop.
+**Purpose:** Tách rời cấu hình ra khỏi code. Sử dụng JSON để lưu tiến trình (Vàng, Skin) và cấu hình Level động. Sử dụng `ScriptableObject` (`ShopConfig`) để quản lý tập trung toàn bộ danh sách vật phẩm (Skins, Boosters, CoinPacks), giúp dễ dàng cân bằng game và bổ sung đồ mới trực tiếp qua Inspector mà không cần sửa code UI.
 
 ## 3. Data Flow & Performance
 
@@ -277,7 +285,7 @@ Assets/
 │   ├── Data/           (LevelData)
 │   ├── Editor/         (LevelGenerator)
 │   ├── Gameplay/       (GridCell, PizzaPlate, PizzaSliceVisual)
-│   ├── UI/             ⚠️ TRỐNG - chưa có script
+│   ├── UI/             (UIManager, ShopManager, GameOverUI, LevelProgressUI, etc)
 │   └── Utils/          (ObjectPoolManager, BezierTween)
 ├── Settings/           (URP/Render Pipeline settings)
 ├── Shader/             (Shader_Dia.shadergraph)
@@ -321,6 +329,11 @@ Dưới đây là các hàm quan trọng đã được viết trong quá trình 
 - `IsAllSlotsEmpty()`: Kiểm tra tất cả slot đã trống chưa.
 - `ClearTray()`: Hủy toàn bộ anchor + xóa tham chiếu đĩa.
 - `DrawGizmos(int slotCount)`: Vẽ khung preview cho Editor.
+
+### DailyRewardManager (`Scripts/UI/DailyRewardManager.cs`)
+
+- Quản lý điểm danh 7 ngày và chống gian lận thời gian (Time-travel Hack). Áp dụng thiết kế Data-Driven qua cấu hình `DailyRewardConfig` để phân phối Vàng, Booster, Skin, và Rương (Chest).
+- **Robust Anti-Cheat:** Tích hợp `ServerTimeProvider` để lấy giờ chuẩn xác từ Internet (`Date` Header). Kết hợp đối tượng `TimeValidationData` để tính toán Offline-Offset (độ trễ), tự động bắt quả tang khi người chơi đổi giờ máy tính lúc ngắt mạng và đưa ra hình phạt reset chuỗi.
 
 ### SaveLoadManager (`Scripts/Core/SaveLoadManager.cs`)
 

@@ -115,6 +115,7 @@ Platform:  Mobile/Casual
     - File script/Prefab mới được tạo/xóa? → Cập nhật `@ARCHITECTURE`
     - Tech stack thay đổi? → Cập nhật `@STACK`
     - Quyết định kỹ thuật quan trọng? → Append vào `@STATE`
+    - Đạt mốc cuối của một Tuần/Phase (khi toàn bộ task trong `tasks.md` của thư mục tính năng đó đã tick xanh)? → Cập nhật `@ROADMAP`
     - Pattern mới cần ghi nhớ? → Append vào CONVENTIONS.md hoặc SKILL.md hiện có
     - Kết thúc bằng dòng: `🔄 Sync: [files updated] ✅` hoặc `🔄 Sync: No spec updates needed.`
     > ℹ️ Chi tiết đầy đủ hơn xem `.agents/workflows/post-execution-sync.md`
