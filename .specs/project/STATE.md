@@ -8,6 +8,11 @@
 
 ## 1. Recent Decisions (ADR)
 
+- **[2026-06-17] Project Delivered & Finalized:**
+  - Hoàn tất mọi khâu tối ưu hóa: Zero-GC đạt chuẩn (<100B Alloc/frame), CPU frame time < 10ms, Draw Calls đạt 41 (< 50 yêu cầu công ty).
+  - Khóa vSyncCount = 0 để mở khóa 60 FPS thực tế trên Android.
+  - Sơ đồ hệ thống, luồng chạy chính và Video Gameplay đã lên sóng GitHub và báo cáo Mentor. Đóng máy dự án thành công rực rỡ!
+
 - **[2026-06-16] Booster System Architecture & Zero-GC Polish:**
   - **Data-Driven & Pattern Matching:** Triển khai thành công 4 loại Booster (Cutter, Sauce, Move, Trash) theo đúng sát thiết kế GDD.
     - `Cutter`: Đĩa mục tiêu thiếu -> Tìm ô kề cạnh trống -> Spawn đĩa mới bù đắp, ép nổ.
